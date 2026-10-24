@@ -28,7 +28,7 @@ namespace PotatoRider
     {
         internal static ConfigEntry<bool> Keys, CameraFollows, BowLock;
         internal static ConfigEntry<int> TurnPercent;
-        internal static ConfigEntry<float> EdgeMargin, GallopSeconds;
+        internal static ConfigEntry<float> EdgeMargin, TrotSeconds;
 
         private static readonly AccessTools.FieldRef<Player, Transform> AttachPoint = AccessTools.FieldRefAccess<Player, Transform>("m_attachPoint");
         private static readonly AccessTools.FieldRef<Player, Quaternion> LookYaw = AccessTools.FieldRefAccess<Player, Quaternion>("m_lookYaw");
@@ -39,7 +39,7 @@ namespace PotatoRider
         {
             Keys = config.Bind("1 - Steering", "Steer with the keys", true, "Odin Horse: A and D turn the horse, hold W to walk and Shift to gallop, let go to stop. The mouse only moves the camera. Off: the base game's way, the horse goes where the camera looks.");
             TurnPercent = config.Bind("1 - Steering", "Turn speed percent", 100, new ConfigDescription("How fast A and D turn the horse, as a percent of its own turn speed (Odin Horse's Turn Speed and Running Turn Speed: 75 and 120 degrees a second by default).", new AcceptableValueRange<int>(25, 300)));
-            GallopSeconds = config.Bind("1 - Steering", "Seconds to full gallop", 3f, new ConfigDescription("How long the horse takes to build up from standing to a full gallop, passing through walk and trot; slowing down takes half as long. 0 keeps the horse's own, quicker build-up.", new AcceptableValueRange<float>(0f, 10f)));
+            TrotSeconds = config.Bind("1 - Steering", "Seconds to full trot", 0.75f, new ConfigDescription("Holding W: how long the horse takes to build up from standing to its full W speed (a trot), and slowing down takes half as long. Shift gallops with the horse's own quick build-up. 0 keeps the horse's own build-up for W too.", new AcceptableValueRange<float>(0f, 5f)));
             CameraFollows = config.Bind("2 - Camera", "Turns with the horse", true, "The camera turns when the horse turns, so you keep your view. Off: the camera holds its direction while the horse turns under you.");
             BowLock = config.Bind("3 - Bow", "Camera stops at the bow arc", true, "While a bow is drawn on the horse, the camera stops at the edges of Odin Horse's bow arc, so the crosshair stays where arrows can go.");
             EdgeMargin = config.Bind("3 - Bow", "Margin inside the arc", 0f, new ConfigDescription("Degrees the camera stops short of the arc's edges. 0 stops it right at the edge, where arrows still leave along the crosshair.", new AcceptableValueRange<float>(0f, 20f)));
@@ -126,8 +126,9 @@ namespace PotatoRider
 
         // A creature speeds up by Character.m_acceleration metres a second every physics step (not scaled by time) and
         // slows down twice as fast. Measured on the Odin Horse: full walk in about 0.7 s, full gallop in about 1.5 s.
-        // While ridden, the step is set so a full gallop (its run speed) takes "Seconds to full gallop"; the walk, trot
-        // and gallop animations follow the speed by themselves. Never made quicker than the horse's own.
+        // While ridden and not galloping, the step is set so W's top speed (the horse's base speed, a trot with Odin
+        // Horse's Speed Modifier at 3) takes "Seconds to full trot", and slowing down from a gallop or to a stop eases
+        // the same way. Shift keeps the horse's own quick build-up. Never made quicker than the horse's own.
         [HarmonyPatch(typeof(Character), "UpdateWalking")]
         internal static class BuildUp
         {
@@ -135,8 +136,9 @@ namespace PotatoRider
             {
                 __state = -1f;
                 var saddle = steered;
-                if (!saddle || !Keys.Value || GallopSeconds.Value <= 0f || __instance != saddle.GetCharacter() || !saddle.HaveValidUser()) return;
-                float step = __instance.m_runSpeed * Time.fixedDeltaTime / GallopSeconds.Value;
+                if (!saddle || !Keys.Value || TrotSeconds.Value <= 0f || __instance != saddle.GetCharacter() || !saddle.HaveValidUser()) return;
+                if (SpeedOf(saddle) == Speed.Run) return;                                   // Shift: the horse's own build-up
+                float step = __instance.m_speed * Time.fixedDeltaTime / TrotSeconds.Value;
                 if (step <= 0f || step >= __instance.m_acceleration) return;
                 __state = __instance.m_acceleration;
                 __instance.m_acceleration = step;
