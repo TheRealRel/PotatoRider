@@ -28,7 +28,7 @@ namespace PotatoRider
     {
         internal static ConfigEntry<bool> Keys, CameraFollows, BowLock;
         internal static ConfigEntry<int> TurnPercent;
-        internal static ConfigEntry<float> EdgeMargin;
+        internal static ConfigEntry<float> EdgeMargin, GallopSeconds;
 
         private static readonly AccessTools.FieldRef<Player, Transform> AttachPoint = AccessTools.FieldRefAccess<Player, Transform>("m_attachPoint");
         private static readonly AccessTools.FieldRef<Player, Quaternion> LookYaw = AccessTools.FieldRefAccess<Player, Quaternion>("m_lookYaw");
@@ -39,6 +39,7 @@ namespace PotatoRider
         {
             Keys = config.Bind("1 - Steering", "Steer with the keys", true, "Odin Horse: A and D turn the horse, hold W to walk and Shift to gallop, let go to stop. The mouse only moves the camera. Off: the base game's way, the horse goes where the camera looks.");
             TurnPercent = config.Bind("1 - Steering", "Turn speed percent", 100, new ConfigDescription("How fast A and D turn the horse, as a percent of its own turn speed (Odin Horse's Turn Speed and Running Turn Speed: 75 and 120 degrees a second by default).", new AcceptableValueRange<int>(25, 300)));
+            GallopSeconds = config.Bind("1 - Steering", "Seconds to full gallop", 3f, new ConfigDescription("How long the horse takes to build up from standing to a full gallop, passing through walk and trot; slowing down takes half as long. 0 keeps the horse's own, quicker build-up.", new AcceptableValueRange<float>(0f, 10f)));
             CameraFollows = config.Bind("2 - Camera", "Turns with the horse", true, "The camera turns when the horse turns, so you keep your view. Off: the camera holds its direction while the horse turns under you.");
             BowLock = config.Bind("3 - Bow", "Camera stops at the bow arc", true, "While a bow is drawn on the horse, the camera stops at the edges of Odin Horse's bow arc, so the crosshair stays where arrows can go.");
             EdgeMargin = config.Bind("3 - Bow", "Margin inside the arc", 0f, new ConfigDescription("Degrees the camera stops short of the arc's edges. 0 stops it right at the edge, where arrows still leave along the crosshair.", new AcceptableValueRange<float>(0f, 20f)));
@@ -120,6 +121,30 @@ namespace PotatoRider
                 }
                 __result = turnEased * rate * Mathf.Deg2Rad;   // what the game reports: radians a second, signed
                 return false;                                  // the rider steers; nothing else turns the horse
+            }
+        }
+
+        // A creature speeds up by Character.m_acceleration metres a second every physics step (not scaled by time) and
+        // slows down twice as fast. Measured on the Odin Horse: full walk in about 0.7 s, full gallop in about 1.5 s.
+        // While ridden, the step is set so a full gallop (its run speed) takes "Seconds to full gallop"; the walk, trot
+        // and gallop animations follow the speed by themselves. Never made quicker than the horse's own.
+        [HarmonyPatch(typeof(Character), "UpdateWalking")]
+        internal static class BuildUp
+        {
+            private static void Prefix(Character __instance, out float __state)
+            {
+                __state = -1f;
+                var saddle = steered;
+                if (!saddle || !Keys.Value || GallopSeconds.Value <= 0f || __instance != saddle.GetCharacter() || !saddle.HaveValidUser()) return;
+                float step = __instance.m_runSpeed * Time.fixedDeltaTime / GallopSeconds.Value;
+                if (step <= 0f || step >= __instance.m_acceleration) return;
+                __state = __instance.m_acceleration;
+                __instance.m_acceleration = step;
+            }
+
+            private static void Postfix(Character __instance, float __state)
+            {
+                if (__state >= 0f) __instance.m_acceleration = __state;
             }
         }
 
