@@ -1,14 +1,19 @@
 // Riding the Odin Horse with the keys instead of the mouse (Valheim, PotatoRider).
 //
 // The base game's saddle sends the horse wherever the camera looks while W or Shift is held; A and D do nothing.
-// Here the rider keeps a heading of their own: A and D turn it at the horse's own turn speed (Odin Horse's "Turn
-// Speed" and "Running Turn Speed"), and the saddle is told to go that way instead of where the camera looks.
+// Here the saddle is always told to go straight ahead, the way the horse faces, and A and D turn the horse itself at
+// its own turn speed (Odin Horse's "Turn Speed" walking, "Running Turn Speed" galloping), easing in and out over a
+// quarter second. Turning the horse directly, rather than pointing the saddle off to one side, keeps it walking the
+// way it faces (a creature walks toward its target and turns at full speed only when that target is 90 degrees away,
+// so an offset target makes it crab sideways) and stops the turn as soon as the key is let go.
 // Hold W to walk, Shift to gallop; let go and the horse stops. A or D while standing turns it in place.
 //
 // The camera turns with the horse, so a turn doesn't swing the view around; the mouse looks around on top of that.
+// The horse's facing only changes on physics steps (50 a second, in steps of about 0.8 degrees), so the camera eases
+// after it instead of copying each step, which made the whole view judder.
 // While a bow is drawn the camera stops at the edges of Odin Horse's bow arc ("Bow Turn Left", "Bow Turn Right",
-// "Bow Aim Up Down"), a few degrees inside it, so the crosshair can't point where an arrow can't go. The arc is
-// measured from the saddle the way Odin Horse measures it (Player.m_attachPoint).
+// "Bow Aim Up Down"), so the crosshair can't point where an arrow can't go. The arc is measured from the saddle the
+// way Odin Horse measures it (Player.m_attachPoint); measured in game, an arrow at the edge leaves along the crosshair.
 //
 // Every piece has its own switch in the config so they can be compared mid-ride.
 using System.Linq;
@@ -33,10 +38,10 @@ namespace PotatoRider
         internal static void Bind(ConfigFile config)
         {
             Keys = config.Bind("1 - Steering", "Steer with the keys", true, "Odin Horse: A and D turn the horse, hold W to walk and Shift to gallop, let go to stop. The mouse only moves the camera. Off: the base game's way, the horse goes where the camera looks.");
-            TurnPercent = config.Bind("1 - Steering", "Turn speed percent", 100, new ConfigDescription("How fast A and D turn the horse, as a percent of its own turn speed (Odin Horse's Turn Speed settings).", new AcceptableValueRange<int>(25, 300)));
+            TurnPercent = config.Bind("1 - Steering", "Turn speed percent", 100, new ConfigDescription("How fast A and D turn the horse, as a percent of its own turn speed (Odin Horse's Turn Speed and Running Turn Speed: 75 and 120 degrees a second by default).", new AcceptableValueRange<int>(25, 300)));
             CameraFollows = config.Bind("2 - Camera", "Turns with the horse", true, "The camera turns when the horse turns, so you keep your view. Off: the camera holds its direction while the horse turns under you.");
             BowLock = config.Bind("3 - Bow", "Camera stops at the bow arc", true, "While a bow is drawn on the horse, the camera stops at the edges of Odin Horse's bow arc, so the crosshair stays where arrows can go.");
-            EdgeMargin = config.Bind("3 - Bow", "Margin inside the arc", 5f, new ConfigDescription("Degrees the camera stops short of the arc's edges. The arrow leaves from the bow hand, so it turns a little further than the camera.", new AcceptableValueRange<float>(0f, 20f)));
+            EdgeMargin = config.Bind("3 - Bow", "Margin inside the arc", 0f, new ConfigDescription("Degrees the camera stops short of the arc's edges. 0 stops it right at the edge, where arrows still leave along the crosshair.", new AcceptableValueRange<float>(0f, 20f)));
         }
 
         // ------------------------------------------------------------------ which mount
@@ -50,8 +55,19 @@ namespace PotatoRider
         private static float Yaw(Vector3 v) => Mathf.Atan2(v.x, v.z) * Mathf.Rad2Deg;
 
         // ------------------------------------------------------------------ steering
-        private static Sadle headingFor;
-        private static float heading;
+        private enum Speed { Stop, Walk, Run, Turn, NoChange }   // the same order as Sadle.Speed
+        private static readonly AccessTools.FieldRef<Sadle, Vector3> ControlDir = AccessTools.FieldRefAccess<Sadle, Vector3>("m_controlDir");
+        private static readonly System.Reflection.FieldInfo SpeedField = AccessTools.Field(typeof(Sadle), "m_speed");
+        private static Speed SpeedOf(Sadle saddle) => (Speed)System.Convert.ToInt32(SpeedField.GetValue(saddle));
+
+        private static Sadle steered;
+        private static float turnInput, turnEased;
+
+        private static Vector3 Ahead(Character mount)
+        {
+            Vector3 f = mount.transform.forward; f.y = 0f;
+            return f.sqrMagnitude > 0.0001f ? f.normalized : Vector3.forward;
+        }
 
         [HarmonyPatch(typeof(Sadle), "ApplyControlls")]
         internal static class Keyboard
@@ -59,28 +75,44 @@ namespace PotatoRider
             [HarmonyPriority(Priority.High)]
             private static void Prefix(Sadle __instance, ref Vector3 moveDir, ref Vector3 lookDir, bool run, ref bool block)
             {
-                if (!Keys.Value || Ridden(Player.m_localPlayer) != __instance) { headingFor = null; return; }
-                var mount = __instance.GetCharacter();
-                float facing = Yaw(mount.transform.forward);
-                if (headingFor != __instance) { headingFor = __instance; heading = facing; }
-
-                float turn = Mathf.Clamp(moveDir.x, -1f, 1f);
+                if (!Keys.Value || Ridden(Player.m_localPlayer) != __instance) { if (steered == __instance) steered = null; return; }
+                steered = __instance;
+                turnInput = Mathf.Clamp(moveDir.x, -1f, 1f);
                 bool forward = moveDir.z > 0.5f;
-                float rate = (run ? mount.m_runTurnSpeed : mount.m_turnSpeed) * TurnPercent.Value / 100f;
-                heading += turn * rate * Time.deltaTime;
-                // Never more than a quarter turn ahead of the horse, so letting go of A or D doesn't leave it turning on.
-                heading = facing + Mathf.Clamp(Mathf.DeltaAngle(facing, heading), -25f, 25f);
-
-                lookDir = Quaternion.Euler(0f, heading, 0f) * Vector3.forward;
+                lookDir = Ahead(__instance.GetCharacter());                         // always straight ahead; A and D turn the horse
                 if (forward) moveDir = new Vector3(0f, 0f, 1f);                     // walk (Shift still gallops)
-                else if (turn != 0f && !run) { moveDir = Vector3.zero; block = true; }  // turn in place
+                else if (turnInput != 0f && !run)
+                {
+                    var now = SpeedOf(__instance);
+                    if (now == Speed.Walk || now == Speed.Run) moveDir = new Vector3(0f, 0f, -1f);  // stop first: a moving saddle ignores "turn"
+                    else { moveDir = Vector3.zero; block = true; }                  // then turn in place
+                }
                 else moveDir = new Vector3(0f, 0f, -1f);                             // let go: stop
+            }
+        }
+
+        // Runs where the horse is simulated (the rider owns it while riding), once a physics step.
+        [HarmonyPatch(typeof(Sadle), "UpdateRiding")]
+        internal static class Turning
+        {
+            private static void Prefix(Sadle __instance, float dt)
+            {
+                if (__instance != steered || !Keys.Value || !__instance.HaveValidUser()) { if (__instance == steered) turnEased = 0f; return; }
+                var mount = __instance.GetCharacter();
+                if (!mount) return;
+                turnEased = Mathf.MoveTowards(turnEased, turnInput, dt / 0.25f);
+                if (turnEased == 0f) return;
+                bool running = SpeedOf(__instance) == Speed.Run;
+                float rate = (running ? mount.m_runTurnSpeed : mount.m_turnSpeed) * TurnPercent.Value / 100f;
+                mount.transform.rotation = Quaternion.Euler(0f, turnEased * rate * dt, 0f) * mount.transform.rotation;
+                ControlDir(__instance) = Ahead(mount);                               // the saddle keeps going the new way
             }
         }
 
         // ------------------------------------------------------------------ camera
         private static Sadle cameraFor;
-        private static float lastFacing;
+        private static float lastFacing, owed;
+        private const float CameraEase = 0.06f;   // seconds; the horse turns in 20 ms steps
 
         [HarmonyPatch(typeof(Player), nameof(Player.SetMouseLook))]
         internal static class Look
@@ -94,12 +126,17 @@ namespace PotatoRider
 
                 bool changed = false;
                 float facing = Yaw(basis.forward);
-                if (cameraFor != saddle) { cameraFor = saddle; lastFacing = facing; }
-                float turned = Mathf.DeltaAngle(lastFacing, facing);
+                if (cameraFor != saddle) { cameraFor = saddle; lastFacing = facing; owed = 0f; }
+                owed += Mathf.DeltaAngle(lastFacing, facing);
                 lastFacing = facing;
-                if (CameraFollows.Value && Keys.Value && turned != 0f)
+                if (!CameraFollows.Value || !Keys.Value) owed = 0f;
+                if (owed != 0f)
                 {
-                    LookYaw(__instance) = Quaternion.Euler(0f, turned, 0f) * LookYaw(__instance);
+                    // Ease after the horse's stepped turn; a big sudden turn (a jump, a knock-back) is taken at once.
+                    float step = Mathf.Abs(owed) > 30f ? owed : owed * (1f - Mathf.Exp(-Time.deltaTime / CameraEase));
+                    if (Mathf.Abs(owed - step) < 0.001f) step = owed;
+                    owed -= step;
+                    LookYaw(__instance) = Quaternion.Euler(0f, step, 0f) * LookYaw(__instance);
                     changed = true;
                 }
 
