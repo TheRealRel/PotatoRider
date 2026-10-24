@@ -91,21 +91,35 @@ namespace PotatoRider
             }
         }
 
-        // Runs where the horse is simulated (the rider owns it while riding), once a physics step.
-        [HarmonyPatch(typeof(Sadle), "UpdateRiding")]
+        // The game turns a creature in Character.UpdateRotation, every physics step, and returns the turn rate, which
+        // becomes the animator's turn_speed. The Odin Horse's movement blend uses turn_speed across and forward_speed
+        // up: walk-left and walk-right at turn -1/+1 with no forward speed, gallop-left and gallop-right at the gallop
+        // end. So doing the turn here, and reporting it, plays those legs when turning in place and blends them in
+        // while walking. (Turning from Sadle.UpdateRiding ran only at the creature-AI rate, 20 times a second, in
+        // 3.75-degree jumps, and reported no turn, so the legs stood still.) Runs where the horse is simulated; the
+        // rider owns it while riding.
+        private static readonly AccessTools.FieldRef<Character, Vector3> MoveDir = AccessTools.FieldRefAccess<Character, Vector3>("m_moveDir");
+
+        [HarmonyPatch(typeof(Character), "UpdateRotation")]
         internal static class Turning
         {
-            private static void Prefix(Sadle __instance, float dt)
+            private static bool Prefix(Character __instance, float dt, ref float __result)
             {
-                if (__instance != steered || !Keys.Value || !__instance.HaveValidUser()) { if (__instance == steered) turnEased = 0f; return; }
-                var mount = __instance.GetCharacter();
-                if (!mount) return;
+                var saddle = steered;
+                if (!saddle || !Keys.Value || __instance != saddle.GetCharacter() || !saddle.HaveValidUser()) return true;
                 turnEased = Mathf.MoveTowards(turnEased, turnInput, dt / 0.25f);
-                if (turnEased == 0f) return;
-                bool running = SpeedOf(__instance) == Speed.Run;
-                float rate = (running ? mount.m_runTurnSpeed : mount.m_turnSpeed) * TurnPercent.Value / 100f;
-                mount.transform.rotation = Quaternion.Euler(0f, turnEased * rate * dt, 0f) * mount.transform.rotation;
-                ControlDir(__instance) = Ahead(mount);                               // the saddle keeps going the new way
+                bool running = SpeedOf(saddle) == Speed.Run;
+                float rate = (running ? __instance.m_runTurnSpeed : __instance.m_turnSpeed) * TurnPercent.Value / 100f;
+                float angle = turnEased * rate * dt;
+                if (angle != 0f)
+                {
+                    var turn = Quaternion.Euler(0f, angle, 0f);
+                    __instance.transform.rotation = turn * __instance.transform.rotation;
+                    if (MoveDir(__instance) != Vector3.zero) MoveDir(__instance) = turn * MoveDir(__instance);  // keep walking the way it faces
+                    ControlDir(saddle) = Ahead(__instance);                                                   // and so does the saddle
+                }
+                __result = turnEased * rate * Mathf.Deg2Rad;   // what the game reports: radians a second, signed
+                return false;                                  // the rider steers; nothing else turns the horse
             }
         }
 
