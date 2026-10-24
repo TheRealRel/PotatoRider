@@ -1,6 +1,6 @@
-// The mount panel by the health and stamina bars shows the icon its saddle carries. Mods that reuse the Lox saddle
-// for their own tames (the Odin Horse) show a Lox for every animal. When a mount's icon is the Lox's but the mount
-// isn't a Lox, the icon becomes a picture of the animal itself, rendered once from its own model (Jotunn's
+// The mount panel by the health and stamina bars shows the icon its saddle carries, or the panel's default picture,
+// a Lox, when the saddle has none (the Odin Horse's saddle has none). When a mount's icon is empty or the Lox's and
+// the mount isn't a Lox, the icon becomes a picture of the animal itself, rendered once from its own model (Jotunn's
 // RenderManager, the tool behind the hammer menu's icons) and kept for the session (Valheim, PotatoRider).
 using System.Collections.Generic;
 using HarmonyLib;
@@ -51,7 +51,9 @@ namespace PotatoRider
             private static void Postfix(Hud __instance, Player player)
             {
                 var saddle = player ? player.GetDoodadController() as Sadle : null;
-                if (!saddle || !saddle.m_mountIcon || saddle.m_mountIcon != LoxIcon()) return;
+                if (!saddle) return;
+                // An empty icon shows the panel's default picture, the Lox (the Odin Horse saddle has none).
+                if (saddle.m_mountIcon && saddle.m_mountIcon != LoxIcon()) return;
                 var mount = saddle.GetCharacter();
                 if (!mount || Utils.GetPrefabName(mount.gameObject) == "Lox") return;
                 var icon = IconFor(mount);
