@@ -29,7 +29,7 @@ namespace PotatoRider
         internal static ConfigEntry<bool> CallOn, StayOn;
         internal static ConfigEntry<KeyCode> CallKey;
         internal static ConfigEntry<int> WhistleVolume;
-        private const string LastMount = "PotatoRider_LastMount";
+        private const string LastMount = "PotatoRider_LastMount", LastMountName = "PotatoRider_LastMountName";
 
         private static readonly Func<Player, bool> TakeInput =
             AccessTools.MethodDelegate<Func<Player, bool>>(AccessTools.Method(typeof(Player), "TakeInput"));
@@ -53,6 +53,8 @@ namespace PotatoRider
                 if (!nview || !nview.IsValid()) return;
                 var id = nview.GetZDO().m_uid;
                 __instance.m_customData[LastMount] = id.UserID + ":" + id.ID;
+                var tame = saddle.GetCharacter().GetComponent<Tameable>();
+                __instance.m_customData[LastMountName] = tame ? tame.GetHoverName() : Localization.instance.Localize(saddle.GetCharacter().m_name);
             }
         }
 
@@ -105,21 +107,20 @@ namespace PotatoRider
         private static void Call(Player player)
         {
             if (WhistleVolume.Value > 0) Whistle(player);
-            if (!Remembered(player, out var id)) { player.Message(MessageHud.MessageType.Center, "You haven't ridden anything yet"); return; }
+            if (!Remembered(player, out var id)) { Say(player, "You haven't ridden anything yet", "nothing remembered"); return; }
             var go = ZNetScene.instance ? ZNetScene.instance.FindInstance(id) : null;
             if (!go)
             {
-                var zdo = ZDOMan.instance.GetZDO(id);
-                var prefab = zdo != null && ZNetScene.instance ? ZNetScene.instance.GetPrefab(zdo.GetPrefab()) : null;
-                var named = prefab ? prefab.GetComponent<Character>() : null;
-                string name = named ? Localization.instance.Localize(named.m_name) : "Your mount";
-                player.Message(MessageHud.MessageType.Center, zdo != null ? name + " is out of earshot" : "Your mount can't be found");
+                // Not loaded near you. Your game may not even know of it (after logging in, it only hears of what's
+                // nearby), so it's out of earshot either way, named as it was when you last rode it.
+                player.m_customData.TryGetValue(LastMountName, out var name);
+                Say(player, (string.IsNullOrEmpty(name) ? "Your mount" : name) + " is out of earshot", "not loaded");
                 return;
             }
             var animal = go.GetComponent<Character>();
             var tame = go.GetComponent<Tameable>();
             var nview = go.GetComponent<ZNetView>();
-            if (!animal || animal.IsDead() || !tame || !nview || !nview.IsValid() || !animal.IsTamed()) { player.Message(MessageHud.MessageType.Center, "Your mount can't come"); return; }
+            if (!animal || animal.IsDead() || !tame || !nview || !nview.IsValid() || !animal.IsTamed()) { Say(player, "Your mount can't come", "not a living tame"); return; }
             if (player.GetDoodadController() is Sadle riding && riding && riding.GetCharacter() == animal) return;   // already on it
 
             string following = nview.GetZDO().GetString(ZDOVars.s_follow);
@@ -130,7 +131,13 @@ namespace PotatoRider
             }
             var ai = go.GetComponent<BaseAI>();
             if (ai != null) ai.m_alertedEffects.Create(go.transform.position, go.transform.rotation, go.transform);
-            player.Message(MessageHud.MessageType.Center, tame.GetHoverName() + " is coming");
+            Say(player, tame.GetHoverName() + " is coming", "following was '" + following + "'");
+        }
+
+        private static void Say(Player player, string text, string why)
+        {
+            player.Message(MessageHud.MessageType.Center, text);
+            Plugin.Log.LogInfo("Call: " + text + " (" + why + ")");
         }
 
         // ------------------------------------------------------------------ the whistle, made in code

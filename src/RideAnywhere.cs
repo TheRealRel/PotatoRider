@@ -40,6 +40,20 @@ namespace PotatoRider
             return tame.m_saddle.HaveValidUser() ? null : tame.m_saddle;
         }
 
+        // Mount Up's adjust mode has its own Alt + E (force mount). While it's on, ours steps aside: one prompt, one mount.
+        private static ConfigEntry<bool> mountUpAdjust;
+        private static bool mountUpLooked;
+        private static bool MountUpAdjusting()
+        {
+            if (!mountUpLooked)
+            {
+                mountUpLooked = true;
+                if (BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("meldurson.MountUpRestored", out var info) && info.Instance)
+                    info.Instance.Config.TryGetEntry("Custom Mounts", "Enable Adjust Custom Mounts", out mountUpAdjust);
+            }
+            return mountUpAdjust != null && mountUpAdjust.Value;
+        }
+
         private static string KeyName(KeyCode k)
         {
             switch (k)
@@ -56,7 +70,7 @@ namespace PotatoRider
         {
             private static bool Prefix(Player __instance, GameObject go, bool hold)
             {
-                if (!Enabled.Value || hold || __instance != Player.m_localPlayer || __instance.IsAttached() || !Input.GetKey(Key.Value)) return true;
+                if (!Enabled.Value || MountUpAdjusting() || hold || __instance != Player.m_localPlayer || __instance.IsAttached() || !Input.GetKey(Key.Value)) return true;
                 var saddle = Rideable(go);
                 if (!saddle) return true;
                 saddle.Interact(__instance, false, false);     // the saddle's own mount request
@@ -69,7 +83,7 @@ namespace PotatoRider
         {
             private static void Postfix(Tameable __instance, ref string __result)
             {
-                if (!Enabled.Value || string.IsNullOrEmpty(__result) || !Rideable(__instance.gameObject)) return;
+                if (!Enabled.Value || MountUpAdjusting() || string.IsNullOrEmpty(__result) || !Rideable(__instance.gameObject)) return;
                 __result += Localization.instance.Localize($"\n[<color=yellow><b>{KeyName(Key.Value)} + $KEY_Use</b></color>] Ride");
             }
         }
