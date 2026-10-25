@@ -10,13 +10,13 @@ Riding fixes and key steering for Valheim mounts. It runs only in your own game:
 
 The camera turns with the horse, so a turn doesn't swing your view away.
 
-<!-- screenshot: riding while turning -->
+![Turning the Odin Horse past a dolmen with A and D](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/steering.jpg)
 
 ![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-bow.png)
 
 **Shoot from the saddle.** The Odin Horse lets you draw a bow while riding, within an arc either side of the horse. Before, the camera could turn past that arc while the arrow couldn't, so the crosshair pointed where no arrow could go. Now, while the bow is drawn, the camera stops at the edge of the arc, and an arrow loosed there flies along the crosshair. With Better Archery installed, the rider no longer flickers while drawing.
 
-<!-- screenshot: the bow drawn at the edge of the arc -->
+![Drawing a bow from the saddle](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/bow.jpg)
 
 ![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-saddle.png)
 
@@ -24,9 +24,9 @@ The camera turns with the horse, so a turn doesn't swing your view away.
 
 ![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-horse.png)
 
-**The right picture on the mount panel.** The panel by your health and stamina bars showed a Lox for every mount. Now it shows the animal you're riding.
+**The right picture on the mount panel.** The panel by your health and stamina bars showed a Lox for every mount. Now it shows the animal you're riding, the Odin Horse or a Mount Up wolf alike.
 
-<!-- screenshot: the mount panel showing the horse -->
+![The mount panel showing a horse](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/panel.jpg) ![The mount panel showing a wolf](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/panel-wolf.jpg)
 
 ## Settings
 
