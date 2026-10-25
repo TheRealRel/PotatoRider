@@ -1,4 +1,4 @@
-Key steering and riding fixes for every Valheim mount: the Odin Horse, the Lox, and Mount Up's wolf, boar and bear. It runs only in your own game: the server doesn't need it, and anyone without it rides the usual way, on the same server.
+Key steering and riding fixes for every Valheim mount: the Odin Horse, the Lox, and Mount Up's wolf and boar. It runs only in your own game: the server doesn't need it, and anyone without it rides the usual way, on the same server.
 
 ![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-horseshoe.png)
 
@@ -45,6 +45,6 @@ Every part has its own setting, under PotatoRider in Configuration Manager, and 
 
 Bug reports go to [GitHub Issues](https://github.com/TheRealRel/PotatoRider/issues), where the source lives too, along with a write-up of how riding works in Valheim ([docs/riding.md](https://github.com/TheRealRel/PotatoRider/blob/main/docs/riding.md)). Questions are welcome on Discord: [relanebeis](https://discord.com/users/373574370267889674).
 
-Needs [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/) and [Jötunn](https://thunderstore.io/c/valheim/p/ValheimModding/Jotunn/). The steering, level camera and mount picture work on any mount. Shooting from the saddle comes from the [Odin Horse](https://thunderstore.io/c/valheim/p/OdinPlus/OdinHorse/)'s mounted combat. Mount Up's wolf, boar and bear come from [Mount Up Restored](https://thunderstore.io/c/valheim/p/Meldurson/MountUpRestored/).
+Needs [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/) and [Jötunn](https://thunderstore.io/c/valheim/p/ValheimModding/Jotunn/). The steering, level camera and mount picture work on any mount. Shooting from the saddle comes from the [Odin Horse](https://thunderstore.io/c/valheim/p/OdinPlus/OdinHorse/)'s mounted combat. Mount Up's wolf and boar come from [Mount Up Restored](https://thunderstore.io/c/valheim/p/Meldurson/MountUpRestored/).
 
 The code is under the MIT License. The icon, page icons and screenshots are © TheRealRel under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): free to share and adapt with credit, but not for commercial use. See LICENSE for the details.
