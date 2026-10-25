@@ -1,4 +1,5 @@
-// Riding the Odin Horse with the keys instead of the mouse (Valheim, PotatoRider).
+// Riding any saddled mount with the keys instead of the mouse (Valheim, PotatoRider): the Odin Horse, a Lox, and
+// Mount Up's wolf, boar or bear. Each turns and speeds up by its own numbers (m_turnSpeed, m_runTurnSpeed, m_speed).
 //
 // The base game's saddle sends the horse wherever the camera looks while W or Shift is held; A and D do nothing.
 // Here the saddle is always told to go straight ahead, the way the horse faces, and A and D turn the horse itself at
@@ -37,11 +38,11 @@ namespace PotatoRider
 
         internal static void Bind(ConfigFile config)
         {
-            Keys = config.Bind("1 - Steering", "Steer with the keys", true, "Odin Horse: A and D turn the horse, hold W to walk and Shift to gallop, let go to stop. The mouse only moves the camera. Off: the base game's way, the horse goes where the camera looks.");
-            TurnPercent = config.Bind("1 - Steering", "Turn speed percent", 100, new ConfigDescription("How fast A and D turn the horse, as a percent of its own turn speed (Odin Horse's Turn Speed and Running Turn Speed: 75 and 120 degrees a second by default).", new AcceptableValueRange<int>(25, 300)));
-            TrotSeconds = config.Bind("1 - Steering", "Seconds to full trot", 0.75f, new ConfigDescription("Holding W: how long the horse takes to build up from standing to its full W speed (a trot), and slowing down takes half as long. Shift gallops with the horse's own quick build-up. 0 keeps the horse's own build-up for W too.", new AcceptableValueRange<float>(0f, 5f)));
-            CameraFollows = config.Bind("2 - Camera", "Turns with the horse", true, "The camera turns when the horse turns, so you keep your view. Off: the camera holds its direction while the horse turns under you.");
-            BowLock = config.Bind("3 - Bow", "Camera stops at the bow arc", true, "While a bow is drawn on the horse, the camera stops at the edges of Odin Horse's bow arc, so the crosshair stays where arrows can go.");
+            Keys = config.Bind("1 - Steering", "Steer with the keys", true, "Every saddled mount: A and D turn it, hold W to walk and Shift to gallop, let go to stop. The mouse only moves the camera. Off: the base game's way, the mount goes where the camera looks.");
+            TurnPercent = config.Bind("1 - Steering", "Turn speed percent", 100, new ConfigDescription("How fast A and D turn the mount, as a percent of its own turn speed (the Odin Horse's Turn Speed and Running Turn Speed are 75 and 120 degrees a second by default).", new AcceptableValueRange<int>(25, 300)));
+            TrotSeconds = config.Bind("1 - Steering", "Seconds to full trot", 0.75f, new ConfigDescription("Holding W: how long the mount takes to build up from standing to its full W speed (a trot on the Odin Horse), and slowing down takes half as long. Shift gallops with the mount's own quick build-up. 0 keeps the mount's own build-up for W too.", new AcceptableValueRange<float>(0f, 5f)));
+            CameraFollows = config.Bind("2 - Camera", "Turns with the horse", true, "The camera turns when the mount turns, so you keep your view. Off: the camera holds its direction while the mount turns under you.");
+            BowLock = config.Bind("3 - Bow", "Camera stops at the bow arc", true, "While a bow is drawn on a mount (the Odin Horse, or any tame its mounted combat covers), the camera stops at the edges of Odin Horse's bow arc, so the crosshair stays where arrows can go.");
             EdgeMargin = config.Bind("3 - Bow", "Margin inside the arc", 0f, new ConfigDescription("Degrees the camera stops short of the arc's edges. 0 stops it right at the edge, where arrows still leave along the crosshair.", new AcceptableValueRange<float>(0f, 20f)));
         }
 
@@ -50,7 +51,7 @@ namespace PotatoRider
         {
             if (!player || !player.IsAttached() || !(player.GetDoodadController() is Sadle saddle) || !saddle) return null;
             var mount = saddle.GetCharacter();
-            return mount && mount.gameObject.name.Contains("rae_OdinHorse") ? saddle : null;
+            return mount ? saddle : null;      // any saddled mount: the Odin Horse, a Lox, Mount Up's wolf, boar or bear
         }
 
         private static float Yaw(Vector3 v) => Mathf.Atan2(v.x, v.z) * Mathf.Rad2Deg;
