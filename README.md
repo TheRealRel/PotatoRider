@@ -22,6 +22,8 @@ Each animal keeps its own pace: a boar is quick and nimble, a Lox heavy and slow
 
 **Get on from anywhere.** Hold Alt and press E anywhere on a tamed, saddled animal to climb on. No hunting for the saddle, which on big animals can hide behind the body. Plain E still pets it, and the animal's prompt shows the key while it's free to ride.
 
+**Call your mount, and it stays where you leave it.** Press J and you whistle for the tame you last rode. It answers with its own call and comes to you, as long as it's close enough to hear. Too far off, and a message says it's out of earshot. When you get off, your mount stays on that spot, like telling a tame to stay, instead of wandering off or trailing after you.
+
 **A level camera and a calm horse.** Attacking from the saddle no longer rolls the camera onto its side. And a ridden Odin Horse no longer rears up to attack on its own, throwing you around mid-fight. Unridden, it fights as before.
 
 ![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-horse.png)
@@ -41,6 +43,9 @@ Every part has its own setting, under PotatoRider in Configuration Manager, and 
 | Seconds to full trot | 0.75 | How long W takes to build up to a trot, and to slow back down. 0 keeps the horse's own quicker build-up. |
 | Ride from anywhere on the animal | On | Alt + E anywhere on a tamed, saddled animal gets you on. |
 | Ride key | Left Alt | The key held with E for that. |
+| Stays where you get off | On | A mount you get off stays on that spot. Off: it does what it did before you got on. |
+| Call your mount | On | The call key whistles for the tame you last rode, and it comes to you. |
+| Call key | J | The key that whistles for your mount. |
 | Turns with the horse | On | The camera turns when your mount turns. Off: it holds its direction while the mount turns under you. |
 | Camera stops at the bow arc | On | While a bow is drawn from the saddle, the camera stops at the edge of the Odin Horse's bow arc. |
 | Margin inside the arc | 0 | Degrees the camera stops short of the arc's edge (0-20). |
