@@ -46,6 +46,7 @@ Every part has its own setting, under PotatoRider in Configuration Manager, and 
 | Stays where you get off | On | A mount you get off stays on that spot. Off: it does what it did before you got on. |
 | Call your mount | On | The call key whistles for the tame you last rode, and it comes to you. |
 | Call key | J | The key that whistles for your mount. |
+| Whistle volume | 60 | How loud the whistle is, in percent, on top of your sound effects volume. 0 is silent. |
 | Turns with the horse | On | The camera turns when your mount turns. Off: it holds its direction while the mount turns under you. |
 | Camera stops at the bow arc | On | While a bow is drawn from the saddle, the camera stops at the edge of the Odin Horse's bow arc. |
 | Margin inside the arc | 0 | Degrees the camera stops short of the arc's edge (0-20). |
