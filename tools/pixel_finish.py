@@ -52,6 +52,7 @@ def finish(img, groups=None):
 
     out = np.zeros((ART, ART, 4))
     level = np.full((ART, ART), -1); group = np.full((ART, ART), -1)
+    dark_detail = np.zeros((ART, ART), bool)
     shades = {}
     for g in range(k):
         sel = lab == g
@@ -64,13 +65,19 @@ def finish(img, groups=None):
         stack = np.stack([gp[1 + dy:ART + 1 + dy, 1 + dx:ART + 1 + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)])
         sm = np.nanmean(np.where(np.isnan(stack), np.nan, stack), 0)
         grey = float(np.median(sat[sel])) < 0.18                        # iron, stone, a grey coat
+        raw = gl.copy()
         gl = (0.15 if grey else 0.4) * gl + (0.85 if grey else 0.6) * sm[ys[sel], xs[sel]]
+        # Small dark details (nail holes, seams, an eye) keep their darkness instead of being smoothed away.
+        detail = raw < 0.6 * np.median(raw)
+        gl[detail] = raw[detail]
         base = (chroma[sel] * gl[:, None]).sum(0) / gl.sum()           # the family's colour at brightness 1
         base = base / max(base.max(), 1e-3)
-        qs = np.quantile(gl, [0.12, 0.4, 0.68, 0.92])                   # 4 brightness levels from this icon's own spread
+        qs = np.quantile(gl[~detail] if (~detail).sum() > 8 else gl, [0.12, 0.4, 0.68, 0.92])   # 4 levels from the body's own spread
         if qs[-1] - qs[0] < 0.08: qs = np.linspace(qs[1] - 0.12, qs[1] + 0.12, 4)
         lv = np.argmin(np.abs(gl[:, None] - qs[None]), 1)
+        lv[detail] = 0
         level[ys[sel], xs[sel]] = lv; group[ys[sel], xs[sel]] = g
+        dark_detail[ys[sel][detail], xs[sel][detail]] = True
         sh = []
         for i, L in enumerate(qs):
             t = (i - 1.5) / 1.5                                         # -1 darkest .. +1 brightest
@@ -88,10 +95,11 @@ def finish(img, groups=None):
         for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)):
             yy, xx = y + dy, x + dx
             if 0 <= yy < ART and 0 <= xx < ART and group[yy, xx] == g: ns.append(level[yy, xx])
-        if len(ns) >= 3 and level[y, x] not in ns:
+        if len(ns) >= 3 and level[y, x] not in ns and not dark_detail[y, x]:
             lv2[y, x] = max(set(ns), key=ns.count)
     for y, x in zip(ys, xs):
-        out[y, x, :3] = shades[group[y, x]][lv2[y, x]]; out[y, x, 3] = 1
+        c = shades[group[y, x]][lv2[y, x]]
+        out[y, x, :3] = c * 0.62 if dark_detail[y, x] else c; out[y, x, 3] = 1
 
     # 3. Selective outline around the cleaned silhouette.
     p = np.pad(solid, 1)

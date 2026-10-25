@@ -107,19 +107,28 @@ def bow():
     return render(parts, yaw=15, pitch=10, fov=30)
 
 def horseshoe():
-    iron = metal(IRON)
+    # Drawn after a real shoe: a U with the toe at the closed end and the two branches ending in heels; a groove (the
+    # fuller) runs along each branch with three nail holes in it, none at the toe.
+    iron, groove = metal(IRON), flat(rgb(34, 34, 40), 0.05)
     parts = []
-    n = 18
+    n, R0 = 22, 0.5
+    span0, span1 = -40, 220                                            # degrees; the toe is at 90
     for i in range(n):
-        a0, a1 = math.radians(-35 + 250 * i / n), math.radians(-35 + 250 * (i + 1) / n)
-        am = (a0 + a1) / 2; R = 0.5
-        seg = box((0.22, 0.07, R * (a1 - a0) * 1.15), (math.cos(am) * R, 0, math.sin(am) * R))
-        rot(seg, [0, 1, 0], -math.degrees(am), (math.cos(am) * R, 0, math.sin(am) * R)); parts.append((seg, iron))
-    for i in (2, 5, 12, 15):                                          # nail holes
-        am = math.radians(-35 + 250 * (i + 0.5) / n)
-        parts.append((cyl(0.035, 0.08, (math.cos(am) * 0.5, 0.01, math.sin(am) * 0.5), sections=6), flat(rgb(35, 35, 40), 0.05)))
-    for m, _ in parts: rot(m, [0, 1, 0], 145)
-    return render(parts, yaw=0, pitch=58, fov=30)
+        a0 = math.radians(span0 + (span1 - span0) * i / n); a1 = math.radians(span0 + (span1 - span0) * (i + 1) / n)
+        am = (a0 + a1) / 2
+        seg = box((0.24, 0.08, R0 * (a1 - a0) * 1.15), (math.cos(am) * R0, 0, math.sin(am) * R0))
+        rot(seg, [0, 1, 0], -math.degrees(am), (math.cos(am) * R0, 0, math.sin(am) * R0)); parts.append((seg, iron))
+    for side in (-1, 1):                                               # fuller and nail holes along each branch
+        for deg in (np.linspace(-25, 50, 3) if side < 0 else np.linspace(130, 205, 3)):
+            am = math.radians(deg); r_ = R0 + 0.05
+            parts.append((cyl(0.045, 0.1, (math.cos(am) * r_, 0.03, math.sin(am) * r_), sections=8), groove))
+        lo, hi = (-32, 60) if side < 0 else (120, 212)
+        for deg in np.linspace(lo, hi, 9):
+            am = math.radians(deg); r_ = R0 + 0.05
+            g = box((0.03, 0.09, 0.06), (math.cos(am) * r_, 0.008, math.sin(am) * r_))
+            rot(g, [0, 1, 0], -deg, (math.cos(am) * r_, 0.008, math.sin(am) * r_)); parts.append((g, groove))
+    for m, _ in parts: rot(m, [0, 1, 0], 180)                       # toe up, heels down, as a shoe is usually drawn
+    return render(parts, yaw=0, pitch=72, fov=30)
 
 def horse(debug=None):
     # A grey horse's head and neck in profile, facing right. A silhouette reads better than primitives here: the outline
