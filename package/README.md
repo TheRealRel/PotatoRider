@@ -1,6 +1,6 @@
 Key steering and riding fixes for every Valheim mount: the Odin Horse, the Lox, and Mount Up's wolf, boar and anything else it saddles, a bear included. It runs only in your own game: the server doesn't need it, and anyone without it rides the usual way, on the same server.
 
-![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-horseshoe.png)
+![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-keys.png)
 
 **Steer with the keys, not the mouse.** In the base game a mount goes wherever the camera looks, and A and D do nothing. With PotatoRider the keys steer any saddled mount and the mouse only moves the camera, so you can look around, or aim, without turning it.
 
