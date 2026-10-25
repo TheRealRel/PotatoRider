@@ -101,8 +101,9 @@ def bow():
     feather = flat(rgb(225, 225, 220), 0.1)
     parts += [(cyl(0.022, 1.12, (0.47, 0, 0), axis="x", sections=6), wood(WOOD, axis=0)),        # shaft, nock at the string
               (prism([(1.02, -0.07), (1.18, 0), (1.02, 0.07)], 0.04), metal(IRON)),               # head past the grip
-              (prism([(-0.06, 0), (0.06, 0.09), (0.16, 0.09), (0.08, 0)], 0.02), feather),        # fletching by the string
-              (prism([(-0.06, 0), (0.06, -0.09), (0.16, -0.09), (0.08, 0)], 0.02), feather)]
+              (prism([(0.0, 0), (0.01, 0.1), (0.05, 0.105), (0.27, 0)], 0.02), feather),   # vanes: tall edge at the back, sloping down to the front
+              (prism([(0.0, 0), (0.01, -0.1), (0.05, -0.105), (0.27, 0)], 0.02), feather)]
+    parts.append((cyl(0.03, 0.06, (-0.07, 0, 0), axis="x", sections=6), flat(rgb(150, 40, 34), 0.1)))   # nock on the string
     for m, _ in parts: rot(m, [0, 0, 1], 35)
     return render(parts, yaw=15, pitch=10, fov=30)
 
