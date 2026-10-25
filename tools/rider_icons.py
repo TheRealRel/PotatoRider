@@ -82,12 +82,18 @@ def horse(debug=None):
     ear = [(0.4, 0.86), (0.41, 0.95), (0.45, 1.03), (0.49, 1.06), (0.53, 1.0), (0.56, 0.92), (0.57, 0.86)]   # leaf-shaped, tip a little forward
     crest = [(0.08, 0.0), (0.07, 0.24), (0.13, 0.5), (0.25, 0.72), (0.37, 0.86), (0.45, 0.92)]
     W = int(S * 0.048)
-    ring_at = (0.77, 0.235)
-    straps = [[(0.43, 0.9), (0.53, 0.86)],                                  # crownpiece over the poll
-              [(0.5, 0.87), (0.53, 0.66), (0.63, 0.45), ring_at],          # cheek strap behind the eye
-              [ring_at, (0.83, 0.33), (0.89, 0.43)],                       # noseband up to the bridge of the nose
-              [ring_at, (0.62, 0.14), (0.47, 0.08)]]                       # rein back toward the rider
-    rein_out = mask(lambda d: d.line(P(straps[3]), fill=255, width=W, joint="curve"))
+    # Placed like a real snaffle bridle: the headpiece goes over the poll BEHIND the ear; the browband crosses the
+    # forehead just under the ear's base, above the eye; the cheekpiece runs from the poll down behind the eye to the
+    # bit at the corner of the mouth; the throatlatch loops from the poll down behind the jaw; the noseband sits a
+    # couple of fingers below the cheekbone, clear of the nostril; the rein comes back off the bit.
+    ring_at = (0.8, 0.2)                                                    # the bit, at the corner of the mouth
+    poll = (0.43, 0.86)
+    straps = [[poll, (0.47, 0.76), (0.56, 0.52), (0.68, 0.33), ring_at],   # cheekpiece, behind the eye
+              [(0.45, 0.84), (0.6, 0.835)],                                 # browband, under the ear
+              [poll, (0.4, 0.66), (0.46, 0.37)],                            # throatlatch, behind the jaw
+              [(0.68, 0.225), (0.75, 0.38), (0.82, 0.52)],                  # noseband
+              [ring_at, (0.63, 0.1), (0.47, 0.06)]]                         # rein
+    rein_out = mask(lambda d: d.line(P(straps[4]), fill=255, width=W, joint="curve"))
     shape = mask(lambda d: (d.polygon(P(body), fill=255), d.polygon(P(ear), fill=255))) | rein_out
     mane = mask(lambda d: (d.line(P(crest), fill=255, width=int(S * 0.2), joint="curve"),
                            d.ellipse([*P([(0.47, 0.95)])[0], *P([(0.6, 0.83)])[0]], fill=255))) & ~mask(
@@ -96,7 +102,7 @@ def horse(debug=None):
     mane &= ~mask(lambda d: d.polygon(P(ear), fill=255))
     strap = mask(lambda d: [d.line(P(st), fill=255, width=W, joint="curve") for st in straps]) & shape
     ring = mask(lambda d: d.ellipse([*P([(ring_at[0] - 0.03, ring_at[1] + 0.03)])[0], *P([(ring_at[0] + 0.03, ring_at[1] - 0.03)])[0]], fill=255))
-    eye = mask(lambda d: d.ellipse([*P([(0.57, 0.72)])[0], *P([(0.62, 0.67)])[0]], fill=255))
+    eye = mask(lambda d: d.ellipse([*P([(0.575, 0.725)])[0], *P([(0.625, 0.675)])[0]], fill=255))
     nostril = mask(lambda d: d.ellipse([*P([(0.885, 0.31)])[0], *P([(0.925, 0.27)])[0]], fill=255))
     inner_ear = mask(lambda d: d.polygon(P([(0.45, 0.9), (0.47, 0.99), (0.5, 1.0), (0.52, 0.92)]), fill=255))
     # Rounded height from the distance to the edge, then normals.
