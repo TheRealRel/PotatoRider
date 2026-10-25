@@ -1,6 +1,6 @@
 {
     "name": "PotatoRider",
-    "version_number": "1.0.0",
+    "version_number": "1.0.1",
     "website_url": "https://github.com/TheRealRel/PotatoRider",
     "description": "Key steering and riding fixes for every Valheim mount: WASD steering, call your mount, get on from anywhere, the bow camera stops at its arc, no camera roll, the right mount picture. Client-side.",
     "dependencies": [

@@ -14,7 +14,7 @@ namespace PotatoRider
     [NetworkCompatibility(CompatibilityLevel.NotEnforced, VersionStrictness.None)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Id = "potato.rider", Version = "1.0.0";
+        public const string Id = "potato.rider", Version = "1.0.1";
         internal static ManualLogSource Log;
         private Harmony harmony;
 
