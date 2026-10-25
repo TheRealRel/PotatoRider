@@ -96,6 +96,12 @@ def finish(img, groups=None):
     # 3. Selective outline around the cleaned silhouette.
     p = np.pad(solid, 1)
     ring = ~solid & (p[:-2, 1:-1] | p[2:, 1:-1] | p[1:-1, :-2] | p[1:-1, 2:])
+    # Small enclosed holes (a stirrup, a ring) stay see-through instead of filling up with outline.
+    from scipy import ndimage
+    holes, nh = ndimage.label(~solid)
+    border = set(np.unique(np.concatenate([holes[0], holes[-1], holes[:, 0], holes[:, -1]])))
+    for h_ in range(1, nh + 1):
+        if h_ not in border and (holes == h_).sum() <= 6: ring &= holes != h_
     for y, x in zip(*np.where(ring)):
         best, lit = None, False
         for dy, dx in ((1, 0), (0, 1), (-1, 0), (0, -1)):

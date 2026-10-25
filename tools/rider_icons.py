@@ -20,7 +20,7 @@ def saddle():
              (prism([(-0.62, 0.3), (-0.42, 0.24), (-0.6, 0.46)], 0.57), dark),                                  # cantle edge
              (prism([(-0.85, -0.12), (0.85, -0.12), (0.8, 0.02), (-0.8, 0.02)], 0.8), flat(RED, 0.25, 6, 45)),   # blanket
              (box((0.09, 0.5, 0.04), (0.05, -0.32, 0.3)), dark),                                                  # stirrup leather
-             (torus(0.1, 0.022, (0.05, -0.6, 0.31), axis="z"), metal(IRON)),                                     # stirrup
+             (torus(0.11, 0.04, (0.05, -0.62, 0.31), axis="z"), metal(IRON)),                                     # stirrup
              (cyl(0.06, 0.14, (0.66, 0.68, 0), sections=10), metal(BRONZE))]                                     # horn
     return render(parts, yaw=-18, pitch=14, fov=30)
 
@@ -64,9 +64,12 @@ def horseshoe():
     for m, _ in parts: rot(m, [0, 1, 0], 145)
     return render(parts, yaw=0, pitch=58, fov=30)
 
-def horse():
+def horse(debug=None):
     # A grey horse's head and neck in profile, facing right. A silhouette reads better than primitives here: the outline
     # is drawn, given a rounded height (distance to the edge) for lighting, then textured and finished like the others.
+    # Tack like a real bridle: crownpiece over the poll behind the ear, cheek strap down behind the eye to a ring at
+    # the corner of the mouth, noseband around the nose into the same ring, and the rein running back from the ring.
+    # Straps are wide enough (about 2 px at icon size) to stay connected; one clear ear, not two tiny ones.
     from PIL import ImageDraw
     from scipy import ndimage
     S = R
@@ -76,18 +79,26 @@ def horse():
     body = [(0.08, 0.0), (0.07, 0.24), (0.13, 0.5), (0.25, 0.72), (0.37, 0.86), (0.47, 0.93), (0.57, 0.88),
             (0.67, 0.76), (0.77, 0.6), (0.87, 0.44), (0.94, 0.33), (0.97, 0.25), (0.95, 0.18), (0.88, 0.15),
             (0.8, 0.17), (0.72, 0.21), (0.6, 0.27), (0.5, 0.33), (0.45, 0.32), (0.46, 0.18), (0.52, 0.0)]
-    ears = [[(0.4, 0.88), (0.45, 1.03), (0.51, 0.9)], [(0.47, 0.9), (0.54, 1.02), (0.57, 0.87)]]
-    crest = [(0.08, 0.0), (0.07, 0.24), (0.13, 0.5), (0.25, 0.72), (0.37, 0.86), (0.47, 0.93)]
-    shape = mask(lambda d: (d.polygon(P(body), fill=255), [d.polygon(P(e), fill=255) for e in ears]))
+    ear = [(0.4, 0.86), (0.41, 0.95), (0.45, 1.03), (0.49, 1.06), (0.53, 1.0), (0.56, 0.92), (0.57, 0.86)]   # leaf-shaped, tip a little forward
+    crest = [(0.08, 0.0), (0.07, 0.24), (0.13, 0.5), (0.25, 0.72), (0.37, 0.86), (0.45, 0.92)]
+    W = int(S * 0.048)
+    ring_at = (0.77, 0.235)
+    straps = [[(0.43, 0.9), (0.53, 0.86)],                                  # crownpiece over the poll
+              [(0.5, 0.87), (0.53, 0.66), (0.63, 0.45), ring_at],          # cheek strap behind the eye
+              [ring_at, (0.83, 0.33), (0.89, 0.43)],                       # noseband up to the bridge of the nose
+              [ring_at, (0.62, 0.14), (0.47, 0.08)]]                       # rein back toward the rider
+    rein_out = mask(lambda d: d.line(P(straps[3]), fill=255, width=W, joint="curve"))
+    shape = mask(lambda d: (d.polygon(P(body), fill=255), d.polygon(P(ear), fill=255))) | rein_out
     mane = mask(lambda d: (d.line(P(crest), fill=255, width=int(S * 0.2), joint="curve"),
                            d.ellipse([*P([(0.47, 0.95)])[0], *P([(0.6, 0.83)])[0]], fill=255))) & ~mask(
         lambda d: d.polygon(P([(0.2, 0.0), (0.19, 0.25), (0.25, 0.48), (0.35, 0.66), (0.47, 0.78), (0.6, 0.8),
                                (0.6, 0.0)]), fill=255))
-    mane &= ~mask(lambda d: [d.polygon(P(e), fill=255) for e in ears])
-    strap = mask(lambda d: (d.line(P([(0.86, 0.47), (0.74, 0.22)]), fill=255, width=int(S * 0.035)),
-                            d.line(P([(0.52, 0.86), (0.66, 0.36)]), fill=255, width=int(S * 0.03)))) & shape
-    eye = mask(lambda d: d.ellipse([*P([(0.55, 0.72)])[0], *P([(0.6, 0.67)])[0]], fill=255))
+    mane &= ~mask(lambda d: d.polygon(P(ear), fill=255))
+    strap = mask(lambda d: [d.line(P(st), fill=255, width=W, joint="curve") for st in straps]) & shape
+    ring = mask(lambda d: d.ellipse([*P([(ring_at[0] - 0.03, ring_at[1] + 0.03)])[0], *P([(ring_at[0] + 0.03, ring_at[1] - 0.03)])[0]], fill=255))
+    eye = mask(lambda d: d.ellipse([*P([(0.57, 0.72)])[0], *P([(0.62, 0.67)])[0]], fill=255))
     nostril = mask(lambda d: d.ellipse([*P([(0.885, 0.31)])[0], *P([(0.925, 0.27)])[0]], fill=255))
+    inner_ear = mask(lambda d: d.polygon(P([(0.45, 0.9), (0.47, 0.99), (0.5, 1.0), (0.52, 0.92)]), fill=255))
     # Rounded height from the distance to the edge, then normals.
     h = np.sqrt(np.clip(ndimage.distance_transform_edt(shape) / (S * 0.12), 0, 1))
     h = ndimage.gaussian_filter(h, 2)
@@ -96,12 +107,14 @@ def horse():
     yy, xx = np.mgrid[0:S, 0:S]
     pts = np.dstack([xx / S * 3, yy / S * 3, h]).reshape(-1, 3); nn = n.reshape(-1, 3)
     col = flat(rgb(182, 179, 174), 0.22, 7, 51)(pts, nn).reshape(S, S, 3)
-    for m_, c_ in ((mane, flat(rgb(64, 60, 58), 0.32, 11, 53)), (strap, flat(LEATHER_D, 0.2, 6, 55))):
+    for m_, c_ in ((mane, flat(rgb(64, 60, 58), 0.32, 11, 53)), (inner_ear, flat(rgb(120, 112, 108), 0.2, 6, 54)),
+                   (strap, flat(LEATHER_D, 0.2, 6, 55)), (ring, metal(IRON))):
         col[m_] = c_(pts, nn).reshape(S, S, 3)[m_]
-    L = np.array([-0.5, 0.8, 0.6]); L = np.array([L[0], L[1], L[2]]) / np.linalg.norm(L)
+    L = np.array([-0.5, 0.8, 0.6]); L = L / np.linalg.norm(L)
     lam = np.clip(n[..., 0] * L[0] + n[..., 1] * L[1] + n[..., 2] * L[2], 0, 1)
     img = col * (0.42 + 0.78 * lam)[..., None]
     img[eye] = rgb(22, 20, 20); img[nostril] = rgb(52, 46, 46)
+    if debug: Image.fromarray(np.uint8(np.clip(img, 0, 1) * 255 * shape[..., None])).save(debug)
     return finish_px(img, shape.astype(float))
 
 ICONS = {"saddle": saddle, "bow": bow, "horseshoe": horseshoe, "horse": horse}
