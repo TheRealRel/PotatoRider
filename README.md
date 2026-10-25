@@ -20,6 +20,8 @@ Each animal keeps its own pace: a boar is quick and nimble, a Lox heavy and slow
 
 ![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-saddle.png)
 
+**Get on from anywhere.** Hold Alt and press E anywhere on a tamed, saddled animal to climb on. No hunting for the saddle, which on big animals can hide behind the body. Plain E still pets it, and the animal's prompt shows the key while it's free to ride.
+
 **A level camera and a calm horse.** Attacking from the saddle no longer rolls the camera onto its side. And a ridden Odin Horse no longer rears up to attack on its own, throwing you around mid-fight. Unridden, it fights as before.
 
 ![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-horse.png)
@@ -37,6 +39,8 @@ Every part has its own setting, under PotatoRider in Configuration Manager, and 
 | Steer with the keys | On | A and D turn your mount, W walks, Shift gallops, let go to stop. Off: the base game's way, where the mount goes where the camera looks. |
 | Turn speed percent | 100 | How fast A and D turn your mount, as a percent of its own turn speed (25-300). |
 | Seconds to full trot | 0.75 | How long W takes to build up to a trot, and to slow back down. 0 keeps the horse's own quicker build-up. |
+| Ride from anywhere on the animal | On | Alt + E anywhere on a tamed, saddled animal gets you on. |
+| Ride key | Left Alt | The key held with E for that. |
 | Turns with the horse | On | The camera turns when your mount turns. Off: it holds its direction while the mount turns under you. |
 | Camera stops at the bow arc | On | While a bow is drawn from the saddle, the camera stops at the edge of the Odin Horse's bow arc. |
 | Margin inside the arc | 0 | Degrees the camera stops short of the arc's edge (0-20). |

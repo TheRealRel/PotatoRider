@@ -31,6 +31,9 @@ namespace PotatoRider
             Patch(typeof(Steering.Turning));
             Patch(typeof(Steering.BuildUp));
             Patch(typeof(Steering.Look));
+            RideAnywhere.Bind(Config);
+            Patch(typeof(RideAnywhere.Mount));
+            Patch(typeof(RideAnywhere.Prompt));
             Run("Better Archery's body turn leaves a mounted rider to the riding mod", () => MountedBowSpine.Enable(harmony));
         }
 
