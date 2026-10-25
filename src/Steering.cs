@@ -127,28 +127,41 @@ namespace PotatoRider
 
         // A creature speeds up by Character.m_acceleration metres a second every physics step (not scaled by time) and
         // slows down twice as fast. Measured on the Odin Horse: full walk in about 0.7 s, full gallop in about 1.5 s.
-        // While ridden and not galloping, the step is set so W's top speed (the horse's base speed, a trot with Odin
-        // Horse's Speed Modifier at 3) takes "Seconds to full trot", and slowing down from a gallop or to a stop eases
-        // the same way. Shift keeps the horse's own quick build-up. Never made quicker than the horse's own.
+        // While ridden and not galloping:
+        // - Odin Horse: the step is set so W's top speed (a trot with Odin Horse's Speed Modifier at 3) takes "Seconds
+        //   to full trot", and slowing down eases the same way. Never made quicker than the horse's own.
+        // - Other mounts: W is at least a trot, a third of the mount's gallop (Mount Up's wolf walks at 1.5 m/s and
+        //   gallops at about 12.6), and it gets there in QuickSeconds (the wolf's own W build-up took 1.5 s).
+        // Shift keeps every mount's own quick build-up. The values are put back after each step.
+        private const float QuickSeconds = 0.3f, TrotShareOfGallop = 1f / 3f;
+
         [HarmonyPatch(typeof(Character), "UpdateWalking")]
         internal static class BuildUp
         {
-            private static void Prefix(Character __instance, out float __state)
+            private static void Prefix(Character __instance, out Vector2 __state)
             {
-                __state = -1f;
+                __state = new Vector2(-1f, -1f);   // x: acceleration to put back, y: speed to put back
                 var saddle = steered;
-                if (!saddle || !Keys.Value || TrotSeconds.Value <= 0f || __instance != saddle.GetCharacter() || !saddle.HaveValidUser()) return;
-                if (SpeedOf(saddle) == Speed.Run) return;                                   // Shift: the horse's own build-up
-                if (!Utils.GetPrefabName(__instance.gameObject).StartsWith("rae_OdinHorse")) return;   // other mounts keep their own (a wolf is quick off the mark)
-                float step = __instance.m_speed * Time.fixedDeltaTime / TrotSeconds.Value;
-                if (step <= 0f || step >= __instance.m_acceleration) return;
-                __state = __instance.m_acceleration;
+                if (!saddle || !Keys.Value || __instance != saddle.GetCharacter() || !saddle.HaveValidUser()) return;
+                if (SpeedOf(saddle) == Speed.Run) return;                                   // Shift: the mount's own build-up
+                bool horse = Utils.GetPrefabName(__instance.gameObject).StartsWith("rae_OdinHorse");
+                if (!horse)
+                {
+                    float trot = __instance.m_runSpeed * TrotShareOfGallop;
+                    if (trot > __instance.m_speed) { __state.y = __instance.m_speed; __instance.m_speed = trot; }
+                }
+                float seconds = horse ? TrotSeconds.Value : QuickSeconds;
+                if (seconds <= 0f) return;
+                float step = __instance.m_speed * Time.fixedDeltaTime / seconds;
+                if (step <= 0f || (horse && step >= __instance.m_acceleration)) return;
+                __state.x = __instance.m_acceleration;
                 __instance.m_acceleration = step;
             }
 
-            private static void Postfix(Character __instance, float __state)
+            private static void Postfix(Character __instance, Vector2 __state)
             {
-                if (__state >= 0f) __instance.m_acceleration = __state;
+                if (__state.x >= 0f) __instance.m_acceleration = __state.x;
+                if (__state.y >= 0f) __instance.m_speed = __state.y;
             }
         }
 

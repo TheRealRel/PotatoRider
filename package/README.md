@@ -4,7 +4,7 @@ Key steering and riding fixes for every Valheim mount: the Odin Horse, the Lox, 
 
 **Steer with the keys, not the mouse.** In the base game a mount goes wherever the camera looks, and A and D do nothing. With PotatoRider the keys steer any saddled mount and the mouse only moves the camera, so you can look around, or aim, without turning it.
 
-- W walks: the Odin Horse builds up gently to a trot, a wolf or boar is off at once. Shift gallops.
+- W trots: the Odin Horse builds up gently, a wolf or boar is off at once. Shift gallops.
 - Let go and the horse stops.
 - A and D turn it at its own turn speed, with its own turning legs, and standing still it turns in place.
 
