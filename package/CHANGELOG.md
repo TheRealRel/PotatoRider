@@ -1,0 +1,3 @@
+**1.0.0**
+
+First release. Key steering for the Odin Horse: W walks up to a trot, Shift gallops, letting go stops, and A and D turn it with its own turning legs, in place too. The camera turns with the horse. While a bow is drawn the camera stops at the edge of the Odin Horse's bow arc, so arrows fly along the crosshair. Attacking from the saddle no longer rolls the camera. A ridden Odin Horse no longer rears to attack on its own. With Better Archery, the rider no longer flickers while drawing. The mount panel shows the animal you ride instead of a Lox. These riding fixes moved here from PotatoTweaks.
