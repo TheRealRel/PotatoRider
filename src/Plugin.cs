@@ -18,6 +18,8 @@ namespace PotatoRider
         internal static ManualLogSource Log;
         private Harmony harmony;
 
+        private void LateUpdate() { Leap.Frame(); }
+
         private void Awake()
         {
             Log = Logger;
