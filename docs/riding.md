@@ -82,6 +82,32 @@ Logged bones: the spine was rewritten after the twist in 1,038 of 1,211 frames, 
 
 **The mount panel showed a Lox.** `Hud.UpdateMount` sets the panel's `overrideSprite` to the saddle's `m_mountIcon`. The Odin Horse's saddle (`Horse_saddle` in its asset bundle) has none, so the panel falls back to its default picture, the Lox. When the icon is empty, or is the Lox's on something that isn't a Lox, PotatoRider renders the creature itself once (Jötunn's `RenderManager`, three-quarter view) and uses that.
 
+**A ridden wolf moved in jerks.** The game moves animals in 50 physics steps a second and draws more frames than that. Bodies with Unity's interpolation on are drawn smoothly between steps; Mount Up's wolf has it off. PotatoRider switches interpolation on for whatever you ride and puts it back when you get off.
+
+**The wolf's jump looked stiff.** Mount Up's jump plays the wolf's own `Jump` clip, straight-legged under a rider. While a ridden wolf is in that clip, PotatoRider blends its pose over a quarter second toward the frame of its run (`C_Run`) where the legs reach furthest fore and aft, found once by sampling the run and measuring how far the lower bones spread, and blends back out as it lands.
+
+**Remembering your mount across restarts.** The game gives every object a new ZDOID each time a world loads, so a saved ZDOID points at something else after a restart. The call key instead writes a random tag into the mount's own saved data (`PotatoRider_MountId`) the first time you ride it, keeps that tag on your character, and looks for it among the animals loaded around you.
+
+## Riding a bear with Mount Up
+
+Mount Up Restored can saddle any creature listed in `BepInEx/config/MountUpRestored_CustomMounts.yml`, and PotatoRider steers whatever it saddles. The entry below is the bear as we ride it on the Potato Server (a Swamp Saddle, tier 3). The bear also has to be tameable: Let Me Tame You lists it, commented out, in its default tame list.
+
+```yaml
+Bjorn:
+  mountPath: Armature/Root/CoG/Hip/Spine_01/Spine_02/Chest
+  stamina: 120
+  saddleTier: 3
+  mountPoint: [5.824461E-07,-0.004986129,0.005513325]
+  saddlePos: [5.824461E-07,-0.008330041,0.005551163]
+  saddleScale: [1.5,1.5,1.5]
+  saddleRotation: [282.8455,90.00001,0]
+  flyingStamina: -1
+  customSaddle: 
+  customAttackOrder: 
+```
+
+**Watch the saddle size when you adjust it in game.** The bear's chest bone is scaled 100 times. Mount Up loads `saddleScale` as the saddle's size in the world, but its adjust mode shows and saves the size relative to that bone, a hundred times smaller. Saving with Left Ctrl + S therefore writes 0.015 for a 1.5 saddle, and the next load makes it a speck. Position and rotation save correctly; after a save, put `saddleScale` back by hand. Adjust mode also stops the ridden animal's animation in any mode but None, so turn it off again for normal riding.
+
 ## How it was measured
 
 PotatoProbe is a test-only mod that is never released and changes nothing on screen. It writes `BepInEx/PotatoProbe.log`:

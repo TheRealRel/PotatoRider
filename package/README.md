@@ -1,14 +1,14 @@
-Key steering and riding fixes for every Valheim mount: the Odin Horse, the Lox, and Mount Up's wolf and boar. It runs only in your own game: the server doesn't need it, and anyone without it rides the usual way, on the same server.
+Key steering and riding fixes for every Valheim mount: the Odin Horse, the Lox, and Mount Up's wolf, boar and anything else it saddles, a bear included. It runs only in your own game: the server doesn't need it, and anyone without it rides the usual way, on the same server.
 
 ![](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/icon-horseshoe.png)
 
 **Steer with the keys, not the mouse.** In the base game a mount goes wherever the camera looks, and A and D do nothing. With PotatoRider the keys steer any saddled mount and the mouse only moves the camera, so you can look around, or aim, without turning it.
 
 - W trots: the Odin Horse builds up gently, a wolf or boar is off at once. Shift gallops.
-- Let go and the horse stops.
+- Let go and the mount stops.
 - A and D turn it at its own turn speed, with its own turning legs, and standing still it turns in place.
 
-Each animal keeps its own pace: a boar is quick and nimble, a Lox heavy and slow. The camera turns with your mount, so a turn doesn't swing your view away.
+Each animal keeps its own pace: a boar is quick and nimble, a Lox heavy and slow, and a wolf leaps with its legs stretched out as in its run. The camera turns with your mount, so a turn doesn't swing your view away.
 
 ![Turning the Odin Horse past a dolmen with A and D](https://raw.githubusercontent.com/TheRealRel/PotatoRider/main/docs/images/steering.jpg)
 
@@ -38,7 +38,7 @@ Every part has its own setting, under PotatoRider in Configuration Manager, and 
 
 | Setting | Default | What it does |
 |---|---|---|
-| Steer with the keys | On | A and D turn your mount, W walks, Shift gallops, let go to stop. Off: the base game's way, where the mount goes where the camera looks. |
+| Steer with the keys | On | A and D turn your mount, W trots, Shift gallops, let go to stop. Off: the base game's way, where the mount goes where the camera looks. |
 | Turn speed percent | 100 | How fast A and D turn your mount, as a percent of its own turn speed (25-300). |
 | Seconds to full trot | 0.75 | How long W takes the Odin Horse to build up to a trot, and to slow back down. 0 keeps the horse's own quicker build-up. Other mounts keep their own. |
 | Ride from anywhere on the animal | On | Alt + E anywhere on a tamed, saddled animal gets you on. |
@@ -55,6 +55,6 @@ Every part has its own setting, under PotatoRider in Configuration Manager, and 
 
 Bug reports go to [GitHub Issues](https://github.com/TheRealRel/PotatoRider/issues), where the source lives too, along with a write-up of how riding works in Valheim ([docs/riding.md](https://github.com/TheRealRel/PotatoRider/blob/main/docs/riding.md)). Questions are welcome on Discord: [relanebeis](https://discord.com/users/373574370267889674).
 
-Needs [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/) and [Jötunn](https://thunderstore.io/c/valheim/p/ValheimModding/Jotunn/). The steering, level camera and mount picture work on any mount. Shooting from the saddle comes from the [Odin Horse](https://thunderstore.io/c/valheim/p/OdinPlus/OdinHorse/)'s mounted combat. Mount Up's wolf and boar come from [Mount Up Restored](https://thunderstore.io/c/valheim/p/Meldurson/MountUpRestored/).
+Needs [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/) and [Jötunn](https://thunderstore.io/c/valheim/p/ValheimModding/Jotunn/). The steering, level camera and mount picture work on any mount. Shooting from the saddle comes from the [Odin Horse](https://thunderstore.io/c/valheim/p/OdinPlus/OdinHorse/)'s mounted combat. Mount Up's wolf, boar and other saddled animals come from [Mount Up Restored](https://thunderstore.io/c/valheim/p/Meldurson/MountUpRestored/); a ready Mount Up entry for riding a bear is in [docs/riding.md](https://github.com/TheRealRel/PotatoRider/blob/main/docs/riding.md#riding-a-bear-with-mount-up).
 
 The code is under the MIT License. The icon, page icons and screenshots are © TheRealRel under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): free to share and adapt with credit, but not for commercial use. See LICENSE for the details.
