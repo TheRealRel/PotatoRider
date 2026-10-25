@@ -1,6 +1,6 @@
 **1.0.1**
 
-A new page icon for steering: W, A, S and D keycaps, rendered like the other page icons. Nothing in the game changes.
+Refreshed page icons. Nothing in the game changes.
 
 **1.0.0**
 

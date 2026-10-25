@@ -44,6 +44,19 @@ def layered(layers, debug=None):
     for i in range(1, len(layers)):
         near = ndimage.binary_dilation(masks[i], iterations=int(S * 0.018)) & ~masks[i] & shape & (top < i)
         shade[near] *= 0.72
+        # A soft cast shadow: the higher layer's outline moved down and right (the light is top-left), blurred, falling
+        # on the layers under it.
+        off = int(S * 0.03)
+        cast = np.zeros((S, S)); cast[off:, off:] = masks[i][:-off, :-off]
+        cast = ndimage.gaussian_filter(cast, S * 0.012)
+        under = shape & (top < i)
+        shade[under] *= 1 - 0.38 * np.clip(cast[under] * 1.4, 0, 1)
+    # Lower parts a little darker, as if lit from above and shaded by the ground (the rendered icons have this).
+    ys = np.linspace(0, 1, S)[:, None] * np.ones((1, S))
+    rows = np.where(shape.any(1))[0]
+    if len(rows):
+        t = np.clip((ys * S - rows[0]) / max(rows[-1] - rows[0], 1), 0, 1)
+        shade *= 1 - 0.22 * t ** 2
     img = col * shade[..., None]
     if debug: Image.fromarray(np.uint8(np.clip(img, 0, 1) * 255 * shape[..., None])).save(debug)
     return finish_px(img, shape.astype(float))
@@ -107,30 +120,6 @@ def bow():
     for m, _ in parts: rot(m, [0, 0, 1], 35)
     return render(parts, yaw=15, pitch=10, fov=30)
 
-def horseshoe():
-    # Drawn after a real shoe: a U with the toe at the closed end and the two branches ending in heels; a groove (the
-    # fuller) runs along each branch with three nail holes in it, none at the toe.
-    iron, groove = metal(IRON), flat(rgb(34, 34, 40), 0.05)
-    parts = []
-    n, R0 = 22, 0.5
-    span0, span1 = -40, 220                                            # degrees; the toe is at 90
-    for i in range(n):
-        a0 = math.radians(span0 + (span1 - span0) * i / n); a1 = math.radians(span0 + (span1 - span0) * (i + 1) / n)
-        am = (a0 + a1) / 2
-        seg = box((0.24, 0.08, R0 * (a1 - a0) * 1.15), (math.cos(am) * R0, 0, math.sin(am) * R0))
-        rot(seg, [0, 1, 0], -math.degrees(am), (math.cos(am) * R0, 0, math.sin(am) * R0)); parts.append((seg, iron))
-    for side in (-1, 1):                                               # fuller and nail holes along each branch
-        for deg in (np.linspace(-25, 50, 3) if side < 0 else np.linspace(130, 205, 3)):
-            am = math.radians(deg); r_ = R0 + 0.05
-            parts.append((cyl(0.045, 0.1, (math.cos(am) * r_, 0.03, math.sin(am) * r_), sections=8), groove))
-        lo, hi = (-32, 60) if side < 0 else (120, 212)
-        for deg in np.linspace(lo, hi, 9):
-            am = math.radians(deg); r_ = R0 + 0.05
-            g = box((0.03, 0.09, 0.06), (math.cos(am) * r_, 0.008, math.sin(am) * r_))
-            rot(g, [0, 1, 0], -deg, (math.cos(am) * r_, 0.008, math.sin(am) * r_)); parts.append((g, groove))
-    for m, _ in parts: rot(m, [0, 1, 0], 180)                       # toe up, heels down, as a shoe is usually drawn
-    return render(parts, yaw=0, pitch=72, fov=30)
-
 def horse(debug=None):
     # A grey horse's head and neck in profile, facing right. A silhouette reads better than primitives here: the outline
     # is drawn, given a rounded height (distance to the edge) for lighting, then textured and finished like the others.
@@ -190,7 +179,7 @@ def horse(debug=None):
     if debug: Image.fromarray(np.uint8(np.clip(img, 0, 1) * 255 * shape[..., None])).save(debug)
     return finish_px(img, shape.astype(float))
 
-ICONS = {"saddle": saddle, "bow": bow, "horseshoe": horseshoe, "horse": horse}
+ICONS = {"saddle": saddle, "bow": bow, "horse": horse}   # W A S D keys: tools/keys_icon.py
 
 if __name__ == "__main__":
     out = sys.argv[1]; names = sys.argv[2:] or list(ICONS)

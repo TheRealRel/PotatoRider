@@ -37,7 +37,7 @@ def build():
     gap = 1.12
     parts += keycap(0, -gap, "W", 3)
     for i, ch in enumerate("ASD"): parts += keycap((i - 1) * gap, 0, ch, 4 + i)
-    return render(parts, yaw=0, pitch=64, fov=26)   # render() already does the outline and colour steps; pixel_finish blurred the letters
+    return render(parts, yaw=0, pitch=64, fov=26, light=(-0.6, 0.7, -0.2))   # light from the top-left and a little behind, so the sides fall into shadow; render() already does the outline and colour steps (pixel_finish blurred the letters)
 
 if __name__ == "__main__":
     build().save(sys.argv[1])
