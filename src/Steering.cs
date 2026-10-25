@@ -40,7 +40,7 @@ namespace PotatoRider
         {
             Keys = config.Bind("1 - Steering", "Steer with the keys", true, "Every saddled mount: A and D turn it, hold W to walk and Shift to gallop, let go to stop. The mouse only moves the camera. Off: the base game's way, the mount goes where the camera looks.");
             TurnPercent = config.Bind("1 - Steering", "Turn speed percent", 100, new ConfigDescription("How fast A and D turn the mount, as a percent of its own turn speed (the Odin Horse's Turn Speed and Running Turn Speed are 75 and 120 degrees a second by default).", new AcceptableValueRange<int>(25, 300)));
-            TrotSeconds = config.Bind("1 - Steering", "Seconds to full trot", 0.75f, new ConfigDescription("Holding W: how long the mount takes to build up from standing to its full W speed (a trot on the Odin Horse), and slowing down takes half as long. Shift gallops with the mount's own quick build-up. 0 keeps the mount's own build-up for W too.", new AcceptableValueRange<float>(0f, 5f)));
+            TrotSeconds = config.Bind("1 - Steering", "Seconds to full trot", 0.75f, new ConfigDescription("Odin Horse, holding W: how long it takes to build up from standing to a trot, and slowing down takes half as long. Other mounts keep their own pace (a wolf or boar is quick off the mark). Shift gallops with the mount's own quick build-up. 0 keeps the mount's own build-up for W too.", new AcceptableValueRange<float>(0f, 5f)));
             CameraFollows = config.Bind("2 - Camera", "Turns with the horse", true, "The camera turns when the mount turns, so you keep your view. Off: the camera holds its direction while the mount turns under you.");
             BowLock = config.Bind("3 - Bow", "Camera stops at the bow arc", true, "While a bow is drawn on a mount (the Odin Horse, or any tame its mounted combat covers), the camera stops at the edges of Odin Horse's bow arc, so the crosshair stays where arrows can go.");
             EdgeMargin = config.Bind("3 - Bow", "Margin inside the arc", 0f, new ConfigDescription("Degrees the camera stops short of the arc's edges. 0 stops it right at the edge, where arrows still leave along the crosshair.", new AcceptableValueRange<float>(0f, 20f)));
@@ -139,6 +139,7 @@ namespace PotatoRider
                 var saddle = steered;
                 if (!saddle || !Keys.Value || TrotSeconds.Value <= 0f || __instance != saddle.GetCharacter() || !saddle.HaveValidUser()) return;
                 if (SpeedOf(saddle) == Speed.Run) return;                                   // Shift: the horse's own build-up
+                if (!Utils.GetPrefabName(__instance.gameObject).StartsWith("rae_OdinHorse")) return;   // other mounts keep their own (a wolf is quick off the mark)
                 float step = __instance.m_speed * Time.fixedDeltaTime / TrotSeconds.Value;
                 if (step <= 0f || step >= __instance.m_acceleration) return;
                 __state = __instance.m_acceleration;

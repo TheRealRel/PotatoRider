@@ -4,7 +4,7 @@ Key steering and riding fixes for every Valheim mount: the Odin Horse, the Lox, 
 
 **Steer with the keys, not the mouse.** In the base game a mount goes wherever the camera looks, and A and D do nothing. With PotatoRider the keys steer any saddled mount and the mouse only moves the camera, so you can look around, or aim, without turning it.
 
-- W walks, building up gently to a trot. Shift gallops.
+- W walks: the Odin Horse builds up gently to a trot, a wolf or boar is off at once. Shift gallops.
 - Let go and the horse stops.
 - A and D turn it at its own turn speed, with its own turning legs, and standing still it turns in place.
 
@@ -40,7 +40,7 @@ Every part has its own setting, under PotatoRider in Configuration Manager, and 
 |---|---|---|
 | Steer with the keys | On | A and D turn your mount, W walks, Shift gallops, let go to stop. Off: the base game's way, where the mount goes where the camera looks. |
 | Turn speed percent | 100 | How fast A and D turn your mount, as a percent of its own turn speed (25-300). |
-| Seconds to full trot | 0.75 | How long W takes to build up to a trot, and to slow back down. 0 keeps the horse's own quicker build-up. |
+| Seconds to full trot | 0.75 | How long W takes the Odin Horse to build up to a trot, and to slow back down. 0 keeps the horse's own quicker build-up. Other mounts keep their own. |
 | Ride from anywhere on the animal | On | Alt + E anywhere on a tamed, saddled animal gets you on. |
 | Ride key | Left Alt | The key held with E for that. |
 | Stays where you get off | On | A mount you get off stays on that spot. Off: it does what it did before you got on. |
