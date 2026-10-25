@@ -5,7 +5,7 @@ import sys, os, math
 import numpy as np
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from render_icons import (render, box, cyl, sphere, torus, prism, rot, flat, wood, metal, rgb, fbm,
+from render_icons import (R, finish_px, render, box, cyl, sphere, torus, prism, rot, flat, wood, metal, rgb, fbm,
                           WOOD, WOOD_D, WOOD_L, IRON, IRON_D, BRONZE, LEATHER, GOLD)
 
 LEATHER_D = rgb(98, 58, 32)
@@ -25,26 +25,27 @@ def saddle():
     return render(parts, yaw=-18, pitch=14, fov=30)
 
 def bow():
+    # The limbs bow out toward the target (+x), the string runs straight between the tips on the archer's side, and
+    # the arrow is nocked on the string and points out through the grip.
     limb = wood(WOOD_L, axis=1)
-    parts = []
-    pts = []
+    parts, pts = [], []
     for i in range(17):
         t = i / 16 * 2 - 1                      # -1 .. 1 along the bow
-        y = t * 0.95; x = -0.32 * (1 - t * t) + 0.08 * t ** 4
+        y = t * 0.95; x = 0.34 * (1 - t * t) - 0.06 * t ** 4
         pts.append((x, y))
     for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
         L = math.hypot(x1 - x0, y1 - y0); a = math.degrees(math.atan2(y1 - y0, x1 - x0))
         thick = 0.055 * (1 - 0.45 * abs((y0 + y1) / 2) / 0.95)
         seg = cyl(thick, L * 1.15, ((x0 + x1) / 2, (y0 + y1) / 2, 0), axis="x", sections=8)
         rot(seg, [0, 0, 1], a, ((x0 + x1) / 2, (y0 + y1) / 2, 0)); parts.append((seg, limb))
-    parts.append((box((0.12, 0.26, 0.12), (-0.32, 0, 0)), flat(LEATHER_D, 0.2, 6, 47)))     # grip
+    parts.append((box((0.12, 0.26, 0.12), (0.34, 0, 0)), flat(LEATHER_D, 0.2, 6, 47)))       # grip
     (xa, ya), (xb, yb) = pts[0], pts[-1]
     parts.append((cyl(0.012, math.hypot(xb - xa, yb - ya), ((xa + xb) / 2, 0, 0), sections=6), flat(rgb(225, 215, 190), 0.05)))  # string
-    shaft = cyl(0.022, 1.3, (0.05, 0, 0), axis="x", sections=6)
-    parts += [(shaft, wood(WOOD, axis=0)),
-              (prism([(0.7, -0.07), (0.86, 0), (0.7, 0.07)], 0.04, (0, 0, 0)), metal(IRON)),            # arrowhead
-              (prism([(-0.6, 0), (-0.48, 0.09), (-0.4, 0.09), (-0.5, 0)], 0.02), flat(rgb(225, 225, 220), 0.1)),   # fletching
-              (prism([(-0.6, 0), (-0.48, -0.09), (-0.4, -0.09), (-0.5, 0)], 0.02), flat(rgb(225, 225, 220), 0.1))]
+    feather = flat(rgb(225, 225, 220), 0.1)
+    parts += [(cyl(0.022, 1.12, (0.47, 0, 0), axis="x", sections=6), wood(WOOD, axis=0)),        # shaft, nock at the string
+              (prism([(1.02, -0.07), (1.18, 0), (1.02, 0.07)], 0.04), metal(IRON)),               # head past the grip
+              (prism([(-0.06, 0), (0.06, 0.09), (0.16, 0.09), (0.08, 0)], 0.02), feather),        # fletching by the string
+              (prism([(-0.06, 0), (0.06, -0.09), (0.16, -0.09), (0.08, 0)], 0.02), feather)]
     for m, _ in parts: rot(m, [0, 0, 1], 35)
     return render(parts, yaw=15, pitch=10, fov=30)
 
@@ -64,19 +65,44 @@ def horseshoe():
     return render(parts, yaw=0, pitch=58, fov=30)
 
 def horse():
-    coat = flat(rgb(175, 172, 168), 0.18, 6, 51)                       # grey, like the icon's pony
-    mane = flat(rgb(70, 66, 64), 0.25, 9, 53)
-    side = [(-0.35, -0.6), (0.25, -0.6), (0.3, -0.1), (0.42, 0.25), (0.75, 0.38), (0.78, 0.58), (0.5, 0.72),
-            (0.15, 0.82), (0.0, 0.95), (-0.12, 0.78), (-0.25, 0.4), (-0.4, 0.0)]
-    parts = [(prism(side, 0.42), coat),
-             (prism([(-0.3, -0.6), (-0.44, 0.0), (-0.3, 0.42), (-0.14, 0.8), (0.02, 0.97), (-0.2, 0.92), (-0.42, 0.62), (-0.58, 0.1), (-0.52, -0.6)], 0.3, (0.0, 0, 0)), mane),
-             (prism([(-0.02, 0.88), (0.08, 1.12), (0.14, 0.86)], 0.1, (0, 0, 0.13)), coat),   # ears
-             (prism([(-0.02, 0.88), (0.08, 1.12), (0.14, 0.86)], 0.1, (0, 0, -0.13)), coat),
-             (sphere(0.055, (0.3, 0.6, 0.21)), flat(rgb(25, 22, 22), 0.05)),                     # eye
-             (sphere(0.045, (0.7, 0.42, 0.17)), flat(rgb(45, 40, 40), 0.05)),                    # nostril
-             (box((0.06, 0.06, 0.46), (0.45, 0.42, 0)), flat(LEATHER_D, 0.2, 6, 55)),             # bridle noseband
-             (box((0.05, 0.42, 0.46), (0.18, 0.55, 0)), flat(LEATHER_D, 0.2, 6, 57))]             # cheek strap
-    return render(parts, yaw=-14, pitch=6, fov=30)
+    # A grey horse's head and neck in profile, facing right. A silhouette reads better than primitives here: the outline
+    # is drawn, given a rounded height (distance to the edge) for lighting, then textured and finished like the others.
+    from PIL import ImageDraw
+    from scipy import ndimage
+    S = R
+    def P(pts): return [(x * S * 0.86 + S * 0.07, (1 - y) * S * 0.86 + S * 0.07) for x, y in pts]
+    def mask(draw_fn):
+        im = Image.new("L", (S, S), 0); draw_fn(ImageDraw.Draw(im)); return np.asarray(im) > 0
+    body = [(0.08, 0.0), (0.07, 0.24), (0.13, 0.5), (0.25, 0.72), (0.37, 0.86), (0.47, 0.93), (0.57, 0.88),
+            (0.67, 0.76), (0.77, 0.6), (0.87, 0.44), (0.94, 0.33), (0.97, 0.25), (0.95, 0.18), (0.88, 0.15),
+            (0.8, 0.17), (0.72, 0.21), (0.6, 0.27), (0.5, 0.33), (0.45, 0.32), (0.46, 0.18), (0.52, 0.0)]
+    ears = [[(0.4, 0.88), (0.45, 1.03), (0.51, 0.9)], [(0.47, 0.9), (0.54, 1.02), (0.57, 0.87)]]
+    crest = [(0.08, 0.0), (0.07, 0.24), (0.13, 0.5), (0.25, 0.72), (0.37, 0.86), (0.47, 0.93)]
+    shape = mask(lambda d: (d.polygon(P(body), fill=255), [d.polygon(P(e), fill=255) for e in ears]))
+    mane = mask(lambda d: (d.line(P(crest), fill=255, width=int(S * 0.2), joint="curve"),
+                           d.ellipse([*P([(0.47, 0.95)])[0], *P([(0.6, 0.83)])[0]], fill=255))) & ~mask(
+        lambda d: d.polygon(P([(0.2, 0.0), (0.19, 0.25), (0.25, 0.48), (0.35, 0.66), (0.47, 0.78), (0.6, 0.8),
+                               (0.6, 0.0)]), fill=255))
+    mane &= ~mask(lambda d: [d.polygon(P(e), fill=255) for e in ears])
+    strap = mask(lambda d: (d.line(P([(0.86, 0.47), (0.74, 0.22)]), fill=255, width=int(S * 0.035)),
+                            d.line(P([(0.52, 0.86), (0.66, 0.36)]), fill=255, width=int(S * 0.03)))) & shape
+    eye = mask(lambda d: d.ellipse([*P([(0.55, 0.72)])[0], *P([(0.6, 0.67)])[0]], fill=255))
+    nostril = mask(lambda d: d.ellipse([*P([(0.885, 0.31)])[0], *P([(0.925, 0.27)])[0]], fill=255))
+    # Rounded height from the distance to the edge, then normals.
+    h = np.sqrt(np.clip(ndimage.distance_transform_edt(shape) / (S * 0.12), 0, 1))
+    h = ndimage.gaussian_filter(h, 2)
+    gy, gx = np.gradient(h * S * 0.05)
+    n = np.dstack([-gx, gy, np.ones_like(h)]); n /= np.linalg.norm(n, axis=2, keepdims=True)
+    yy, xx = np.mgrid[0:S, 0:S]
+    pts = np.dstack([xx / S * 3, yy / S * 3, h]).reshape(-1, 3); nn = n.reshape(-1, 3)
+    col = flat(rgb(182, 179, 174), 0.22, 7, 51)(pts, nn).reshape(S, S, 3)
+    for m_, c_ in ((mane, flat(rgb(64, 60, 58), 0.32, 11, 53)), (strap, flat(LEATHER_D, 0.2, 6, 55))):
+        col[m_] = c_(pts, nn).reshape(S, S, 3)[m_]
+    L = np.array([-0.5, 0.8, 0.6]); L = np.array([L[0], L[1], L[2]]) / np.linalg.norm(L)
+    lam = np.clip(n[..., 0] * L[0] + n[..., 1] * L[1] + n[..., 2] * L[2], 0, 1)
+    img = col * (0.42 + 0.78 * lam)[..., None]
+    img[eye] = rgb(22, 20, 20); img[nostril] = rgb(52, 46, 46)
+    return finish_px(img, shape.astype(float))
 
 ICONS = {"saddle": saddle, "bow": bow, "horseshoe": horseshoe, "horse": horse}
 
