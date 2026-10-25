@@ -11,18 +11,75 @@ from render_icons import (R, finish_px, render, box, cyl, sphere, torus, prism, 
 LEATHER_D = rgb(98, 58, 32)
 RED = rgb(150, 42, 34)
 
-def saddle():
-    lea, dark = flat(LEATHER, 0.22, 7, 41), flat(LEATHER_D, 0.22, 7, 43)
-    # Side profile: low seat dipping between a tall cantle (back, left) and a pommel with a horn (front, right).
-    prof = [(-0.75, 0.0), (0.75, 0.0), (0.78, 0.38), (0.66, 0.62), (0.56, 0.5), (0.4, 0.3), (0.0, 0.22),
-            (-0.4, 0.28), (-0.6, 0.5), (-0.68, 0.72), (-0.8, 0.6)]
-    parts = [(prism(prof, 0.55), lea),
-             (prism([(-0.62, 0.3), (-0.42, 0.24), (-0.6, 0.46)], 0.57), dark),                                  # cantle edge
-             (prism([(-0.85, -0.12), (0.85, -0.12), (0.8, 0.02), (-0.8, 0.02)], 0.8), flat(RED, 0.25, 6, 45)),   # blanket
-             (box((0.09, 0.5, 0.04), (0.05, -0.32, 0.3)), dark),                                                  # stirrup leather
-             (torus(0.11, 0.04, (0.05, -0.62, 0.31), axis="z"), metal(IRON)),                                     # stirrup
-             (cyl(0.06, 0.14, (0.66, 0.68, 0), sections=10), metal(BRONZE))]                                     # horn
-    return render(parts, yaw=-18, pitch=14, fov=30)
+def layered(layers, debug=None):
+    # Shaded silhouettes stacked like cut-outs: each layer is a drawn outline with its own rounded height (distance
+    # to its edge), later layers sit on top, and a lower layer gets a soft contact shadow where a higher one overlaps
+    # its edge, so the parts read as separate pieces. Each layer: (draw_fn on a PIL ImageDraw, material, roundness).
+    from PIL import ImageDraw
+    from scipy import ndimage
+    S = R
+    top = np.full((S, S), -1); hmap = np.zeros((S, S))
+    masks = []
+    for i, (fn, mat, rnd) in enumerate(layers):
+        im = Image.new("L", (S, S), 0); fn(ImageDraw.Draw(im)); m = np.asarray(im) > 0
+        h = np.sqrt(np.clip(ndimage.distance_transform_edt(m) / (S * rnd), 0, 1))
+        h = ndimage.gaussian_filter(h, 1.5)
+        top[m] = i; hmap[m] = h[m] + i * 0.0
+        masks.append(m)
+    shape = top >= 0
+    gy, gx = np.gradient(ndimage.gaussian_filter(hmap, 1.0) * S * 0.05)
+    # Normals only from within a layer: zero the jumps where layers meet.
+    for g in (gx, gy): g[np.abs(g) > 2.5] = 0
+    n = np.dstack([-gx, gy, np.ones((S, S))]); n /= np.linalg.norm(n, axis=2, keepdims=True)
+    yy, xx = np.mgrid[0:S, 0:S]
+    pts = np.dstack([xx / S * 3, yy / S * 3, hmap]).reshape(-1, 3); nn = n.reshape(-1, 3)
+    col = np.zeros((S, S, 3))
+    for i, (fn, mat, rnd) in enumerate(layers):
+        sel = top == i
+        if sel.any(): col[sel] = mat(pts, nn).reshape(S, S, 3)[sel]
+    L = np.array([-0.5, 0.8, 0.6]); L = L / np.linalg.norm(L)
+    lam = np.clip(n[..., 0] * L[0] + n[..., 1] * L[1] + n[..., 2] * L[2], 0, 1)
+    shade = 0.42 + 0.78 * lam
+    # Contact shadow on a lower layer just below/around a higher layer's edge.
+    for i in range(1, len(layers)):
+        near = ndimage.binary_dilation(masks[i], iterations=int(S * 0.018)) & ~masks[i] & shape & (top < i)
+        shade[near] *= 0.72
+    img = col * shade[..., None]
+    if debug: Image.fromarray(np.uint8(np.clip(img, 0, 1) * 255 * shape[..., None])).save(debug)
+    return finish_px(img, shape.astype(float))
+
+def saddle(debug=None):
+    # A Norse war saddle in profile, front to the right, drawn after real saddles: a high cantle at the back and a
+    # raised pommel at the front, both edged in metal, a seat dipping low between them, a big leather flap hanging
+    # down the side, a woven pad showing all round under it, and the stirrup leather hanging from under the front of
+    # the seat to a D-shaped iron with a flat tread.
+    S = R
+    def P(pts): return [(x * S * 0.9 + S * 0.05, (1 - y) * S * 0.9 + S * 0.05) for x, y in pts]
+    tree = [(0.12, 0.56), (0.08, 0.7), (0.09, 0.83), (0.14, 0.92), (0.21, 0.93), (0.25, 0.86), (0.31, 0.76),
+            (0.42, 0.7), (0.56, 0.7), (0.66, 0.74), (0.73, 0.84), (0.8, 0.91), (0.87, 0.9), (0.9, 0.8), (0.91, 0.62),
+            (0.9, 0.56)]
+    cantle_edge = [(0.08, 0.72), (0.09, 0.83), (0.14, 0.92), (0.21, 0.93), (0.25, 0.86)]
+    pommel_edge = [(0.73, 0.84), (0.8, 0.91), (0.87, 0.9), (0.9, 0.8)]
+    pad = [(0.06, 0.62), (0.94, 0.62), (0.96, 0.4), (0.9, 0.28), (0.1, 0.28), (0.04, 0.4)]
+    flap = [(0.26, 0.6), (0.7, 0.6), (0.72, 0.3), (0.66, 0.14), (0.32, 0.14), (0.26, 0.24)]
+    W = int(S * 0.05)
+    wool = rgb(140, 40, 34)
+    def pad_mat(p, n):
+        c = flat(wool, 0.22, 8, 61)(p, n)
+        band = np.abs(p[:, 1] / 3 - (1 - (0.33 * 0.9 + 0.05))) < 0.012           # a woven stripe near the lower edge
+        c[band] = rgb(205, 165, 70); return c
+    layers = [
+        (lambda d: d.polygon(P(pad), fill=255), pad_mat, 0.1),
+        (lambda d: d.polygon(P(tree), fill=255), flat(LEATHER, 0.2, 7, 41), 0.1),
+        (lambda d: (d.line(P(cantle_edge), fill=255, width=W, joint="curve"),
+                    d.line(P(pommel_edge), fill=255, width=W, joint="curve")), metal(BRONZE), 0.03),
+        (lambda d: d.polygon(P(flap), fill=255), flat(rgb(118, 74, 40), 0.22, 7, 43), 0.12),
+        (lambda d: d.line(P([(0.6, 0.66), (0.62, 0.21)]), fill=255, width=int(S * 0.045)), flat(LEATHER_D, 0.2, 6, 47), 0.03),
+        (lambda d: d.line(P([(0.62 + 0.1 * math.cos(math.pi * k / 12), 0.04 + 0.17 * math.sin(math.pi * k / 12)) for k in range(13)]
+                             + [(0.72, 0.04)]), fill=255, width=int(S * 0.04), joint="curve"),
+         metal(IRON), 0.03),
+    ]
+    return layered(layers, debug)
 
 def bow():
     # The limbs bow out toward the target (+x), the string runs straight between the tips on the archer's side, and
