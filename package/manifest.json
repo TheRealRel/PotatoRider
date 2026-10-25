@@ -2,7 +2,7 @@
     "name": "PotatoRider",
     "version_number": "1.0.0",
     "website_url": "https://github.com/TheRealRel/PotatoRider",
-    "description": "Key steering and riding fixes for Valheim mounts: steer the Odin Horse with WASD, a camera that stops at the bow's arc, no camera roll, the right mount picture. Client-side.",
+    "description": "Key steering and riding fixes for every Valheim mount: steer with WASD, the camera stops at the bow's arc, no camera roll, the right mount picture. Client-side.",
     "dependencies": [
         "denikson-BepInExPack_Valheim-5.4.2351",
         "ValheimModding-Jotunn-2.30.2"
