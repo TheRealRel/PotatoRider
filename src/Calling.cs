@@ -43,29 +43,45 @@ namespace PotatoRider
         }
 
         // ------------------------------------------------------------------ remembering the last mount
+        // The game renumbers every object (its ZDOID) each time a world loads, so a remembered number points at
+        // something else after a restart. Instead the mount gets a name tag of its own in its saved data (a random
+        // id under PotatoRider_MountId), and your character remembers that tag. Someone else riding it later keeps
+        // the same tag, so you can both call it.
+        private static readonly int MountIdKey = "PotatoRider_MountId".GetStableHashCode();
+
         [HarmonyPatch(typeof(Player), nameof(Player.StartDoodadControl))]
         internal static class Remember
         {
             private static void Postfix(Player __instance, IDoodadController shipControl)
             {
-                if (__instance != Player.m_localPlayer || !(shipControl is Sadle saddle) || !saddle) return;
-                var nview = saddle.GetCharacter() ? saddle.GetCharacter().GetComponent<ZNetView>() : null;
+                if (__instance != Player.m_localPlayer || !(shipControl is Sadle saddle) || !saddle || !saddle.GetCharacter()) return;
+                var animal = saddle.GetCharacter();
+                var nview = animal.GetComponent<ZNetView>();
                 if (!nview || !nview.IsValid()) return;
-                var id = nview.GetZDO().m_uid;
-                __instance.m_customData[LastMount] = id.UserID + ":" + id.ID;
-                var tame = saddle.GetCharacter().GetComponent<Tameable>();
-                __instance.m_customData[LastMountName] = tame ? tame.GetHoverName() : Localization.instance.Localize(saddle.GetCharacter().m_name);
+                var zdo = nview.GetZDO();
+                string tag = zdo.GetString(MountIdKey);
+                if (string.IsNullOrEmpty(tag))
+                {
+                    tag = Guid.NewGuid().ToString("N");
+                    if (!nview.IsOwner()) nview.ClaimOwnership();   // riding makes you the owner already; this is a fallback
+                    zdo.Set(MountIdKey, tag);
+                }
+                __instance.m_customData[LastMount] = tag;
+                var tame = animal.GetComponent<Tameable>();
+                __instance.m_customData[LastMountName] = tame ? tame.GetHoverName() : Localization.instance.Localize(animal.m_name);
             }
         }
 
-        private static bool Remembered(Player player, out ZDOID id)
+        // The remembered mount, if it's loaded near you.
+        private static Character Find(string tag)
         {
-            id = ZDOID.None;
-            if (!player.m_customData.TryGetValue(LastMount, out var s)) return false;
-            var parts = s.Split(':');
-            if (parts.Length != 2 || !long.TryParse(parts[0], out long user) || !uint.TryParse(parts[1], out uint n)) return false;
-            id = new ZDOID(user, n);
-            return true;
+            foreach (var c in Character.GetAllCharacters())
+            {
+                if (!c || c.IsPlayer()) continue;
+                var nview = c.GetComponent<ZNetView>();
+                if (nview && nview.IsValid() && nview.GetZDO().GetString(MountIdKey) == tag) return c;
+            }
+            return null;
         }
 
         // ------------------------------------------------------------------ staying where you get off
@@ -107,20 +123,19 @@ namespace PotatoRider
         private static void Call(Player player)
         {
             if (WhistleVolume.Value > 0) Whistle(player);
-            if (!Remembered(player, out var id)) { Say(player, "You haven't ridden anything yet", "nothing remembered"); return; }
-            var go = ZNetScene.instance ? ZNetScene.instance.FindInstance(id) : null;
-            if (!go)
+            if (!player.m_customData.TryGetValue(LastMount, out var tag) || string.IsNullOrEmpty(tag)) { Say(player, "You haven't ridden anything yet", "nothing remembered"); return; }
+            var animal = Find(tag);
+            if (!animal)
             {
-                // Not loaded near you. Your game may not even know of it (after logging in, it only hears of what's
-                // nearby), so it's out of earshot either way, named as it was when you last rode it.
+                // Not loaded near you (or gone), so it can't hear you. Named as it was when you last rode it.
                 player.m_customData.TryGetValue(LastMountName, out var name);
                 Say(player, (string.IsNullOrEmpty(name) ? "Your mount" : name) + " is out of earshot", "not loaded");
                 return;
             }
-            var animal = go.GetComponent<Character>();
+            var go = animal.gameObject;
             var tame = go.GetComponent<Tameable>();
             var nview = go.GetComponent<ZNetView>();
-            if (!animal || animal.IsDead() || !tame || !nview || !nview.IsValid() || !animal.IsTamed()) { Say(player, "Your mount can't come", "not a living tame"); return; }
+            if (animal.IsDead() || !tame || !nview || !nview.IsValid() || !animal.IsTamed()) { Say(player, "Your mount can't come", "not a living tame"); return; }
             if (player.GetDoodadController() is Sadle riding && riding && riding.GetCharacter() == animal) return;   // already on it
 
             string following = nview.GetZDO().GetString(ZDOVars.s_follow);
