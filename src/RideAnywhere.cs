@@ -26,8 +26,8 @@ namespace PotatoRider
 
         internal static void Bind(ConfigFile config)
         {
-            Enabled = config.Bind("4 - Mounting", "Ride from anywhere on the animal", true, "Hold the ride key and press Use anywhere on a tamed, saddled animal to get on, not just on the saddle. Helps with big animals whose body hides the saddle.");
-            Key = config.Bind("4 - Mounting", "Ride key", KeyCode.LeftAlt, "The key held with Use to get on from anywhere on the animal.");
+            Enabled = config.Bind("1 - Riding", "Ride from anywhere on the animal", true, "Hold the ride key and press Use anywhere on a tamed, saddled animal to get on, not just on the saddle. Helps with big animals whose body hides the saddle.");
+            Key = config.Bind("1 - Riding", "Ride key", KeyCode.LeftAlt, "The key held with Use to get on from anywhere on the animal.");
         }
 
         // The saddle of a tamed, saddled animal that nobody is riding, or null.

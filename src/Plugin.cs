@@ -14,7 +14,7 @@ namespace PotatoRider
     [NetworkCompatibility(CompatibilityLevel.NotEnforced, VersionStrictness.None)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Id = "potato.rider", Version = "1.0.1";
+        public const string Id = "potato.rider", Version = "1.0.2";
         internal static ManualLogSource Log;
         private Harmony harmony;
 
@@ -23,6 +23,7 @@ namespace PotatoRider
         private void Awake()
         {
             Log = Logger;
+            var before = ConfigMove.Read(Config.ConfigFilePath);
             harmony = new Harmony(Id);
             Patch(typeof(MountedCameraRoll.EyeLevel));
             Patch(typeof(MountedCameraRoll.TrueUp));
@@ -37,6 +38,18 @@ namespace PotatoRider
             Patch(typeof(RideAnywhere.Mount));
             Patch(typeof(RideAnywhere.Prompt));
             Calling.Bind(Config);
+            // 1.0.1 and before had five sections (Steering, Camera, Bow, Mounting, Calling); now two, so Configuration
+            // Manager stays short. Old values are carried over once.
+            var moves = new System.Collections.Generic.Dictionary<string, BepInEx.Configuration.ConfigEntryBase>
+            {
+                { "1 - Steering|Steer with the keys", Steering.Keys }, { "1 - Steering|Turn speed percent", Steering.TurnPercent },
+                { "1 - Steering|Seconds to full trot", Steering.TrotSeconds }, { "2 - Camera|Turns with the horse", Steering.CameraFollows },
+                { "3 - Bow|Camera stops at the bow arc", Steering.BowLock }, { "3 - Bow|Margin inside the arc", Steering.EdgeMargin },
+                { "4 - Mounting|Ride from anywhere on the animal", RideAnywhere.Enabled }, { "4 - Mounting|Ride key", RideAnywhere.Key },
+                { "4 - Mounting|Stays where you get off", Calling.StayOn }, { "5 - Calling|Call your mount", Calling.CallOn },
+                { "5 - Calling|Call key", Calling.CallKey }, { "5 - Calling|Whistle volume", Calling.WhistleVolume },
+            };
+            ConfigMove.Apply(Config, before, moves);
             Patch(typeof(Calling.Remember));
             Patch(typeof(Calling.Stay));
             Patch(typeof(Calling.CallKeyPress));

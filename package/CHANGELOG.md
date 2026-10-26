@@ -1,3 +1,7 @@
+**1.0.2**
+
+Settings in two sections, Riding and Camera, instead of five, so Configuration Manager is quicker to look through. Your settings move over on the first start.
+
 **1.0.1**
 
 Refreshed page icons. Nothing in the game changes.

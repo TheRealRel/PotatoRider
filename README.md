@@ -34,7 +34,7 @@ Each animal keeps its own pace: a boar is quick and nimble, a Lox heavy and slow
 
 ## Settings
 
-Every part has its own setting, under PotatoRider in Configuration Manager, and changes take effect while you ride. They're your own, not the server's.
+Every part has its own setting, under PotatoRider in Configuration Manager in two sections (Riding and Camera), and changes take effect while you ride. They're your own, not the server's.
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -47,9 +47,9 @@ Every part has its own setting, under PotatoRider in Configuration Manager, and 
 | Call your mount | On | The call key whistles for the tame you last rode, and it comes to you. |
 | Call key | J | The key that whistles for your mount. |
 | Whistle volume | 60 | How loud the whistle is, in percent, on top of your sound effects volume. 0 is silent. |
-| Turns with the horse | On | The camera turns when your mount turns. Off: it holds its direction while the mount turns under you. |
+| Camera turns with the mount | On | The camera turns when your mount turns. Off: it holds its direction while the mount turns under you. |
 | Camera stops at the bow arc | On | While a bow is drawn from the saddle, the camera stops at the edge of the Odin Horse's bow arc. |
-| Margin inside the arc | 0 | Degrees the camera stops short of the arc's edge (0-20). |
+| Camera margin inside the bow arc | 0 | Degrees the camera stops short of the arc's edge (0-20). |
 
 **Tip for servers with the Odin Horse.** Its "Speed Modifier" setting is really the horse's walking speed, in metres a second. At the default of 1, W barely moves it. Around 3 makes W a trot, which fits the steering here. Its bow arc settings ("Bow Turn Left", "Bow Turn Right", "Bow Aim Up Down") decide where the camera stops: we use 110, 110 and 55.
 

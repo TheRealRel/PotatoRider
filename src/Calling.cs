@@ -36,10 +36,10 @@ namespace PotatoRider
 
         internal static void Bind(ConfigFile config)
         {
-            StayOn = config.Bind("4 - Mounting", "Stays where you get off", true, "A mount you get off stays on that spot, like telling a tame to stay, instead of wandering off or trailing after you.");
-            CallOn = config.Bind("5 - Calling", "Call your mount", true, "The call key whistles for the tame you last rode, and it comes to you, as long as it's close enough to hear (in the area the game has loaded around you).");
-            CallKey = config.Bind("5 - Calling", "Call key", KeyCode.J, "The key that whistles for your mount.");
-            WhistleVolume = config.Bind("5 - Calling", "Whistle volume", 60, new ConfigDescription("How loud the whistle is, in percent, on top of your sound effects volume. 0 is silent.", new AcceptableValueRange<int>(0, 100)));
+            StayOn = config.Bind("1 - Riding", "Stays where you get off", true, "A mount you get off stays on that spot, like telling a tame to stay, instead of wandering off or trailing after you.");
+            CallOn = config.Bind("1 - Riding", "Call your mount", true, "The call key whistles for the tame you last rode, and it comes to you, as long as it's close enough to hear (in the area the game has loaded around you).");
+            CallKey = config.Bind("1 - Riding", "Call key", KeyCode.J, "The key that whistles for your mount.");
+            WhistleVolume = config.Bind("1 - Riding", "Whistle volume", 60, new ConfigDescription("How loud the whistle is, in percent, on top of your sound effects volume. 0 is silent.", new AcceptableValueRange<int>(0, 100)));
         }
 
         // ------------------------------------------------------------------ remembering the last mount
