@@ -161,9 +161,16 @@ def horse(debug=None):
     eye = mask(lambda d: d.ellipse([*P([(0.575, 0.725)])[0], *P([(0.625, 0.675)])[0]], fill=255))
     nostril = mask(lambda d: d.ellipse([*P([(0.885, 0.31)])[0], *P([(0.925, 0.27)])[0]], fill=255))
     inner_ear = mask(lambda d: d.polygon(P([(0.45, 0.9), (0.47, 0.99), (0.5, 1.0), (0.52, 0.92)]), fill=255))
-    # Rounded height from the distance to the edge, then normals.
-    h = np.sqrt(np.clip(ndimage.distance_transform_edt(shape) / (S * 0.12), 0, 1))
-    h = ndimage.gaussian_filter(h, 2)
+    # Form, not a flat cut-out (the user, 2026-10-27: "the horse still looks 1 dimensional"): a rounded neck and head
+    # from the distance to the edge over a wide band, plus the big round cheek (jowl), a raised muzzle and a dip where
+    # the jowl meets the neck, so every part turns its own way to the light like the faceted stars.
+    yy0, xx0 = np.mgrid[0:S, 0:S]
+    def bump(cx, cy, r, amp):
+        px, py = P([(cx, cy)])[0]
+        return amp * np.exp(-(((xx0 - px) ** 2 + (yy0 - py) ** 2) / (2 * (r * S * 0.86) ** 2)))
+    h = np.sqrt(np.clip(ndimage.distance_transform_edt(shape) / (S * 0.28), 0, 1))
+    h = h + bump(0.62, 0.42, 0.13, 0.85) + bump(0.86, 0.27, 0.07, 0.4) + bump(0.55, 0.72, 0.08, 0.2) - bump(0.47, 0.42, 0.06, 0.45)
+    h = ndimage.gaussian_filter(h * shape, 2)
     gy, gx = np.gradient(h * S * 0.05)
     n = np.dstack([-gx, gy, np.ones_like(h)]); n /= np.linalg.norm(n, axis=2, keepdims=True)
     yy, xx = np.mgrid[0:S, 0:S]
@@ -174,7 +181,7 @@ def horse(debug=None):
         col[m_] = c_(pts, nn).reshape(S, S, 3)[m_]
     L = np.array([-0.5, 0.8, 0.6]); L = L / np.linalg.norm(L)
     lam = np.clip(n[..., 0] * L[0] + n[..., 1] * L[1] + n[..., 2] * L[2], 0, 1)
-    img = col * (0.42 + 0.78 * lam)[..., None]
+    img = col * (0.26 + 1.02 * lam)[..., None]
     img[eye] = rgb(22, 20, 20); img[nostril] = rgb(52, 46, 46)
     if debug: Image.fromarray(np.uint8(np.clip(img, 0, 1) * 255 * shape[..., None])).save(debug)
     return finish_px(img, shape.astype(float))
